@@ -48,3 +48,28 @@ class SteaneSyndromeDecoder(object):
         lot_key = self.syndrome_to_lot_key(syndrome)
         corr_type = self.pauli_correction_type(syndrome)
         return self.LOT[lot_key], corr_type
+
+
+class FlaggedSyndromeDecoder(SteaneSyndromeDecoder):
+
+    LOT = {"000": None,
+           "001": (6, ),
+           "010": (4, ),
+           "011": (5, ),
+           "100": (0, ),
+           "101": (3, ),
+           "110": (1, ),
+           "111": (2, ),
+           }
+
+    KEY_FROM_CORRECTION = {
+            (2, 3): "010",
+            (1, 2): "001",
+            (2, 5): "100",
+            }
+
+    def __init__(self, stab, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        correction = stab.qubits[1:3]
+        key = self.KEY_FROM_CORRECTION[correction]
+        self.LOT[key] = correction
