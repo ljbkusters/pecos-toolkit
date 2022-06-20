@@ -205,23 +205,32 @@ class GeneralErrorGen(__BaseErrorGen):
         for epgc in self.epgc_list:
             if isinstance(epgc, ErrorProneGateCollection):
                 self.gen.set_gate_group(epgc.symbol, epgc.ep_gates)
+                # the cases below can be simultaniously configured
                 if epgc.before is True:
-                    symbol_name = "{}_{}".format(epgc.symbol, "before")
-                    err = self.gen.ErrorSet(epgc.error_gates, after=False)
-                    self.errors[symbol_name] = err
-                    self.gen.set_group_error(epgc.symbol, err.error_func,
-                                             error_param=epgc.param)
+                    self.configure_error_group(epgc, after=False)
                 if epgc.after is True:
-                    symbol_name = "{}_{}".format(epgc.symbol, "after")
-                    err = self.gen.ErrorSet(epgc.error_gates, after=True)
-                    self.errors[symbol_name] = err
-                    self.gen.set_group_error(epgc.symbol, err.error_func,
-                                             error_param=epgc.param)
+                    self.configure_error_group(epgc, after=True)
             elif isinstance(epgc, IdleErrorCollection):
                 err = self.gen.ErrorSet(epgc.error_gates, after=epgc.after)
                 self.errors[epgc.symbol] = err
                 self.gen.set_gate_error(epgc.symbol, err.error_func,
                                         error_param=epgc.param)
+
+    def configure_error_group(self, epgc, after):
+        """configure an error group for a given epgc"""
+        symbol_name = "{}_{}".format(epgc.symbol, "before")
+        # ErrorSetMultiQuditGate
+        err = self.error_set_from_epgc(epgc, after)
+        self.errors[symbol_name] = err
+        self.gen.set_group_error(epgc.symbol, err.error_func,
+                                 error_param=epgc.param)
+
+    def error_set_from_epgc(self, epgc, after):
+        if any([hasattr(gate, "__iter__") for gate in epgc.error_gates]):
+            return self.gen.ErrorSetMultiQuditGate(epgc.error_gates,
+                                                   after=after)
+        else:
+            return self.gen.ErrorSet(epgc.error_gates, after=after)
 
     def generate_tick_errors(self, tick_circuit, time, **params):
         """Assign errors to a circuit as configured during initialization"""
