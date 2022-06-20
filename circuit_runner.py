@@ -86,13 +86,16 @@ class ImprovedRunner(pecos.circuit_runners.Standard):
             state = copy.deepcopy(state)
         std_meas, std_faults = super().run(state, circ, *args, **kwargs)
         meas = MeasurementContainer()
-        for i, item in enumerate(circ.items()):
-            if (any(meas_gate in item for meas_gate in self.MEASUREMENTS)):
-                meas[i] = Measurement(num_qubits=state.num_qubits)
-                locations = item[1]
-                locations_meas_ones = std_meas[i] if len(std_meas) > 0 else []
-                for loc in locations:
-                    meas[i][loc] = 1 if loc in locations_meas_ones else 0
+        for tick, tick_idx, params in circ.iter_ticks():
+            for item in tick.items():
+                if (any(meas_gate in item for meas_gate in self.MEASUREMENTS)):
+                    meas[tick_idx] = Measurement(num_qubits=state.num_qubits)
+                    locations = item[1]
+                    locations_meas_ones = \
+                        std_meas[tick_idx] if len(std_meas) > 0 else []
+                    for loc in locations:
+                        meas[tick_idx][loc] = \
+                                1 if loc in locations_meas_ones else 0
         if len(meas) == 0:
             meas = None
         faults = std_faults
