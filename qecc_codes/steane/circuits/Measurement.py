@@ -9,8 +9,11 @@ Measurements.py
 from toolkits.qecc_codes.steane.circuits import Steane
 
 
-class StabMeasCircuit(Steane.BaseSteaneCirc):
+class StabMeasCircuitData(object):
     ANCILLA_QUBIT = 7
+
+
+class StabMeasCircuit(Steane.BaseSteaneCirc, StabMeasCircuitData):
 
     def __init__(self, stabilizer, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -69,7 +72,11 @@ class F1FlagCircData(object):
                 self.init_type, {self.flag_qubit}, tick=self.init_loc)
 
 
-class F1FTECStabMeasCircuit(StabMeasCircuit):
+class F1FTECStabMeasCircuitData(StabMeasCircuitData):
+    FLAG_QUBIT = 8
+
+
+class F1FTECStabMeasCircuit(StabMeasCircuit, F1FTECStabMeasCircuitData):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -82,12 +89,10 @@ class F1FTECStabMeasCircuit(StabMeasCircuit):
         else:
             raise ValueError("stabilizer.pauli_type should be one of"
                              " ('Z', 'X')")
-        self.f1_flag_circ = F1FlagCircData(flag_qubit=self.FLAG_QUBITS[0],
-                                           flag_from_qubit=self.MEAS_QUBITS[0],
+        self.f1_flag_circ = F1FlagCircData(flag_qubit=self.FLAG_QUBIT,
+                                           flag_from_qubit=self.ANCILLA_QUBIT,
                                            gutter_1=2, gutter_2=4,
                                            init_loc=0, meas_loc=5,
                                            meas_type=meas_type,
                                            init_type=init_type)
-        self.FLAG_QUBIT = self.f1_flag_circ.flag_qubit
         self.f1_flag_circ.inject_flag_circuit(self)
-        print(self)
