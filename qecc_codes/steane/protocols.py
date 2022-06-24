@@ -9,12 +9,12 @@ steane.py
 import collections
 
 # from toolkits.error_generator_toolkit import ErrorGenerator
-from toolkits.circuit_runner import ImprovedRunner
-from toolkits.qecc_codes.steane.circuits import Logical
-from toolkits.qecc_codes.steane.circuits import Measurement
-from toolkits.qecc_codes.steane.circuits import Steane
-from toolkits.qecc_codes.steane.circuits import Verification
-from toolkits.qecc_codes.steane.data_types import Syndrome
+from pecos_toolkit.circuit_runner import ImprovedRunner
+from pecos_toolkit.qecc_codes.steane.circuits import Logical
+from pecos_toolkit.qecc_codes.steane.circuits import Measurement
+from pecos_toolkit.qecc_codes.steane.circuits import Steane
+from pecos_toolkit.qecc_codes.steane.circuits import Verification
+from pecos_toolkit.qecc_codes.steane.data_types import Syndrome
 
 
 RUNNER = ImprovedRunner(random_seed=True)

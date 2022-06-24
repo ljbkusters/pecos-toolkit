@@ -6,7 +6,7 @@ Verification.py
 @date 23-06-2022
 """
 
-from toolkits.qecc_codes.steane.circuits import Steane
+from pecos_toolkit.qecc_codes.steane.circuits import Steane
 
 
 class VerifyLogicalZeroStateCirc(Steane.BaseSteaneCirc):

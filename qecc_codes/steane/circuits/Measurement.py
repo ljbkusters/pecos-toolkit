@@ -6,7 +6,7 @@ Measurements.py
 @date 01-06-2022
 """
 
-from toolkits.qecc_codes.steane.circuits import Steane
+from pecos_toolkit.qecc_codes.steane.circuits import Steane
 
 
 class StabMeasCircuitData(object):

@@ -7,8 +7,8 @@ Initialization.py
 """
 
 
-from toolkits.qecc_codes.steane.circuits import Steane
-from toolkits.qecc_codes.steane.circuits import Measurement
+from pecos_toolkit.qecc_codes.steane.circuits import Steane
+from pecos_toolkit.qecc_codes.steane.circuits import Measurement
 
 
 class LogicalZeroInitialization(Steane.BaseSteaneCirc):

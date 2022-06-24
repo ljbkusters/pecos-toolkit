@@ -12,7 +12,7 @@ import itertools
 import pecos.circuits
 import pecos.simulators
 
-from toolkits.qecc_codes.steane.data_types import Plaquette
+from pecos_toolkit.qecc_codes.steane.data_types import Plaquette
 
 
 def distance(array_1, array_2):
