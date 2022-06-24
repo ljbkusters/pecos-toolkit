@@ -13,6 +13,7 @@ from toolkits.circuit_runner import ImprovedRunner
 from toolkits.qecc_codes.steane.circuits import Logical
 from toolkits.qecc_codes.steane.circuits import Measurement
 from toolkits.qecc_codes.steane.circuits import Steane
+from toolkits.qecc_codes.steane.circuits import Verification
 from toolkits.qecc_codes.steane.data_types import Syndrome
 
 
@@ -177,9 +178,16 @@ class F1FTECProtocol(object):
             "SyndromeMeasResults", "syndrome flag_syndrome faults")
 
     @staticmethod
-    def verfied_init_logical_zero():
-        # TODO a circuit class still has to be made for this
-        pass
+    def verified_init_logical_zero(*args, **kwargs):
+        verification_circ = Verification.VerifyLogicalZeroStateCirc()
+        flag_bit = verification_circ.FLAG_QUBIT
+        while True:
+            state = SteaneProtocol.init_logical_zero(*args, **kwargs).state
+            res = RUNNER.run(state, verification_circ, *args, **kwargs)
+            flagged = bool(res.measurements.last().syndrome[flag_bit])
+            if not flagged:
+                break
+        return res
 
     @staticmethod
     def flag_measure_stabilizer(state, stab, *args, **kwargs):
@@ -204,28 +212,28 @@ class F1FTECProtocol(object):
                     # if a flag occurs, stop and do non-FT meas + modified
                     # correction based on which circuit (stab) flagged
                     if F1FTECProtocol.is_flagged(res):
-                        print("detected flag")
+                        # print("detected flag")
                         return F1FTECProtocol.correct_from_flagged_circuit(
-                                state, stab, *args, **kwargs)
+                                state, stabs, stab, *args, **kwargs)
                 syndrome[pauli_type][i] = \
                     Syndrome.Syndrome(pauli_type, *syndrome[pauli_type][i])
         # no flags occured, check if syndromes were different
         # if so, measure non-FT and correct with normal steane correction
-        print(syndrome)
+        # print(syndrome)
         if syndrome[pauli_type][0] != syndrome[pauli_type][1]:
-            print("no flag, syndromes don't match")
+            # print("no flag, syndromes don't match")
             return F1FTECProtocol.correct_non_flagged_erred_circuit(
                     state, stabs, *args, **kwargs)
         # if not, do standard correction on the syndrome
         else:
-            print("no flag, syndromes match")
+            # print("no flag, syndromes match")
             return SteaneProtocol.correct_from_syndrome(
                     state, syndrome[pauli_type][0], *args, **kwargs)
 
     @staticmethod
     def correct_from_flagged_circuit(state, stabs, stab, *args, **kwargs):
         decoder = Syndrome.FlaggedSyndromeDecoder(stab)
-        syndrome = SteaneProtocol.measure_stabilizers(
+        syndrome, faults = SteaneProtocol.measure_stabilizers(
                 state, stabs, *args, **kwargs)
         corr_qubits, corr_pauli_type = decoder.lot_decoder(syndrome)
         circ = Steane.BaseSteaneCirc()
