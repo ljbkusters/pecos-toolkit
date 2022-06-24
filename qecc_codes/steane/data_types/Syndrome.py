@@ -64,8 +64,11 @@ class FlaggedSyndromeDecoder(SteaneSyndromeDecoder):
 
     KEY_FROM_CORRECTION = {
             (2, 3): "010",
+            (3, 2): "010",
             (1, 2): "001",
+            (2, 1): "001",
             (2, 5): "100",
+            (5, 2): "100",
             }
 
     def __init__(self, stab, *args, **kwargs):
