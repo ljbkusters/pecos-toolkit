@@ -174,6 +174,13 @@ class BaseSteaneCirc(pecos.circuits.QuantumCircuit, BaseSteaneData):
         return pecos.simulators.SparseSim(self.num_qubits)
 
 
+class InitPhysicalZero(BaseSteaneCirc):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.append("init |0>", set(self.DATA_QUBITS))
+
+
 class SingleQubitPauli(BaseSteaneCirc):
     def __init__(self, pauli_type, qubit, *args, **kwargs):
         super().__init__(*args, **kwargs)
