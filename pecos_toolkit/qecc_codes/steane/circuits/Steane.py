@@ -184,11 +184,8 @@ class InitPhysicalZero(BaseSteaneCirc):
 class SingleQubitPauli(BaseSteaneCirc):
     def __init__(self, pauli_type, qubit, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        #print("yes!")
         if qubit is not None:
             self.append(pauli_type, {qubit})
-        #self.append("I", set(self.set_of_qubits) - {qubit})
-        #print("no!")
 
 
 class IdleDataBlock(BaseSteaneCirc):
