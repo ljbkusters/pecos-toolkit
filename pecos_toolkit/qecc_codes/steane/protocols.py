@@ -27,6 +27,11 @@ class SteaneProtocol(object):
             "SyndromeMeasResults", "syndrome faults")
 
     @staticmethod
+    def init_physical_zero(*args, **kwargs):
+        circ = Steane.InitPhysicalZero()
+        return RUNNER.run(circ.simulator(), circ, *args, **kwargs)
+
+    @staticmethod
     def init_logical_zero(*args, **kwargs):
         circ = Logical.LogicalZeroInitialization()
         return RUNNER.run(circ.simulator(), circ, *args, **kwargs)
