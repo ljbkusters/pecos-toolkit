@@ -117,6 +117,7 @@ class SteaneProtocol(object):
         res = RUNNER.run(state, circ, *args, **kwargs)
         return res
 
+    @staticmethod
     def classical_correction_decoding(data_syndrome):
         """ decode a codeword with classical correction
 
