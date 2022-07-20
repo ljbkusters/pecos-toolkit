@@ -24,10 +24,13 @@ class SteaneSyndromeDecoder(object):
            }
 
     @staticmethod
-    def syndrome_to_lot_key(syndrome: Syndrome):
-        return "{:}{:}{:}".format(syndrome.top,
-                                     syndrome.left,
-                                     syndrome.right)
+    def bits_to_lot_key(top, left, right):
+        return "{:}{:}{:}".format(top, left, right)
+
+    def syndrome_to_lot_key(self, syndrome: Syndrome):
+        return self.bits_to_lot_key(syndrome.top,
+                                    syndrome.left,
+                                    syndrome.right)
 
     @staticmethod
     def pauli_correction_type(syndrome: Syndrome):
@@ -48,6 +51,10 @@ class SteaneSyndromeDecoder(object):
         lot_key = self.syndrome_to_lot_key(syndrome)
         corr_type = self.pauli_correction_type(syndrome)
         return self.LOT[lot_key], corr_type
+
+    def classical_lot_decoder(self, top, left, right):
+        lot_key = self.bits_to_lot_key(top, left, right)
+        return self.LOT[lot_key]
 
 
 class FlaggedSyndromeDecoder(SteaneSyndromeDecoder):
