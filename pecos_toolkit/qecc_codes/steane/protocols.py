@@ -146,7 +146,30 @@ class SteaneProtocol(object):
                                " maybe it does???")
 
     @staticmethod
+    def decode_state(state, *args, **kwargs):
+        """Decode a logical state with an extra classical steane round"""
+        circ = Measurement.DataStateMeasurement()
+        decoder = Syndrome.SteaneSyndromeDecoder()
+        res = RUNNER.run(state, circ, *args, **kwargs)
+        bits = res.measurements.last().syndrome
+        top_plaq = sum([bits[i] for i in circ.top_plaquette.qubits]) % 2
+        left_plaq = sum([bits[i] for i in
+                         circ.bottom_left_plaquette.qubits]) % 2
+        right_plaq = sum([bits[i] for i in
+                          circ.bottom_right_plaquette.qubits]) % 2
+        correction = decoder.classical_lot_decoder(top_plaq,
+                                                   left_plaq,
+                                                   right_plaq)
+        if correction is not None:
+            # flip the correction bit if not None
+            bits[correction] = (bits[correction] + 1) % 2
+        logical_bit = sum([bits[i] for i in (0, 1, 4)]) % 2
+        # TODO more robust logical def. here ^^^^^^^
+        return logical_bit
+
+    @staticmethod
     def decode_data_codeword(syndrome, with_classical_correction=False):
+        # WARNING: DEPRICATED
         """Get the codeword type from the data state measurement
 
         If a measurement syndrome is a logical 0 or logical 1 codeword
