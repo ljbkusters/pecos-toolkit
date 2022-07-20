@@ -13,6 +13,7 @@ import pecos.circuits
 import pecos.simulators
 
 from pecos_toolkit.qecc_codes.steane.data_types import Plaquette
+from pecos_toolkit import circuit_runner
 
 
 def distance(array_1, array_2):
@@ -157,6 +158,11 @@ class BaseSteaneCirc(pecos.circuits.QuantumCircuit, BaseSteaneData):
     to access the constants necessary for working with the steane code
     """
 
+    def __init__(self, runner=circuit_runner.ImprovedRunner(random_seed=True),
+                 *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._runner = runner
+
     @property
     def set_of_qubits(self):
         """Set of qubits (numbered from 0 to n) in the circuit"""
@@ -172,6 +178,11 @@ class BaseSteaneCirc(pecos.circuits.QuantumCircuit, BaseSteaneData):
     def simulator(self):
         """Simulator corresponding for this circuit and deriving circuits"""
         return pecos.simulators.SparseSim(self.num_qubits)
+
+    def run(self, state=None, *args, **kwargs):
+        if state is None:
+            state = self.simulator()
+        return self._runner.run(state, self, *args, **kwargs)
 
 
 class InitPhysicalZero(BaseSteaneCirc):
