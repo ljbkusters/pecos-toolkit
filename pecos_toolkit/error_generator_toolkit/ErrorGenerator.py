@@ -79,8 +79,8 @@ class __BaseErrorGen(pecos.error_gens.parent_class_error_gen.ParentErrorGen):
 
     def __init__(self, *args, **kwargs):
         """"""
-        self.error_prone_gates = None
-        super().__init__()
+        self.epgc_list = None
+        super().__init__()  # ParentErrorGen takes no args/kwargs
         self.gen = self.generator_class()
         self.configure_error_generator(*args, **kwargs)
 
@@ -119,67 +119,52 @@ class __BaseErrorGen(pecos.error_gens.parent_class_error_gen.ParentErrorGen):
                                   .format(type(self).__name__))
 
     def __repr__(self):
-        return self.error_prone_gates
+        return self.epgc_list
 
 
 class GeneralErrorGen(__BaseErrorGen):
+    """Highly configurable error generator with a user friendly interface"""
 
     ALLOWED_EPGC_TYPES = (ErrorProneGateCollection, IdleErrorCollection)
 
-    def configure_error_generator(self, epgc_list=None):
+    def configure_error_generator(self, epgc_list=list()):
         """Configure the error generator
 
         The kwargs defined above should be passed at init time, or by
         calling this method after init time with the proper parameters
 
         Args:
-            error_types, set of gates (like {"X", "Y", "Z"})
-            error_prone_gates, list of ErrorProneGateCollecion tracks
-                which gates are error prone
+            epgc_list, list of ErrorProneGateCollecion or IdleErrorCollection
+                tracks which gates are error prone / if idle locations can
+                have errors.
         """
-        if epgc_list is None:
-            self.error_prone_gates = self.gen_error_prone_gates()
-        else:
-            self.error_prone_gates = epgc_list
-        self.handle_error_prone_gates(self.error_prone_gates)
+        self.epgc_list = self.epgc_list
+        self.configure_generator_from_epgc_list(self.epgc_list)
 
-    @staticmethod
-    def gen_error_prone_gates():
-        return [ErrorProneGateCollection(symbol="init", ep_gates=_INITS_ALL,
-                                         param="r",
-                                         error_gates=_PAULI_ERRORS,
-                                         before=False, after=True),
-                ErrorProneGateCollection(symbol="one qubit",
-                                         ep_gates=_ONE_QUBIT_GATES,
-                                         param="p",
-                                         error_gates=_PAULI_ERRORS,
-                                         before=False, after=True),
-                ErrorProneGateCollection(symbol="two qubit",
-                                         ep_gates=_TWO_QUBIT_GATES,
-                                         param="q",
-                                         error_gates=_PAULI_ERRORS,
-                                         before=False, after=True),
-                ErrorProneGateCollection(symbol="measure",
-                                         ep_gates=_MEASURE_ALL,
-                                         param="s",
-                                         error_gates=_PAULI_ERRORS,
-                                         before=True, after=False),
-                IdleErrorCollection(symbol="idle", param="i",
-                                    error_gates=_PAULI_ERRORS,
-                                    before=False, after=True),
-                ]
+    def reconfigure(self):
+        """High level method to reconfigure the error generator.
 
-    def handle_error_prone_gates(self, epgc_list, clear_generator=False):
+        The intended use is to update the epgc_list directly and then call
+        the reconfigure class like the example below:
+            >>> MyGenerator = GeneralErrorGen()
+            >>> MyGenerator.epgc_list.append(an_epgc_object)
+            >>> MyGenerator.reconfigure()
+        """
+        self.configure_generator_from_epgc_list(
+                self.epgc_list, clear_generator=True)
+
+    def configure_generator_from_epgc_list(self, epgc_list,
+                                           clear_generator=False):
         """Handle error_gen init from ErrorProneGateCollection objects
 
         This method implements the automatic initialization of all objects
-        in the error_prone_gates list, which should ocntain exclusively
+        in the epgc_list list, which should ocntain exclusively
         ErrorProngeGateCollection (epgc) objects or by exception for
         idle errors which do not specify gates to operate on but act only
         on idle qubits IdleErrorCollection (iec).
 
-        the handle_error_prone_gates method may also take a new list of
-        error prone gates. If clear_generator is set to True, the error
+        the configure_generator_from_epgc_list method may also take a new list
+        of error prone gates. If clear_generator is set to True, the error
         generator is fully reset, basically fully changing the way errors
         are generated to the new list of supplied epgc_list.
 
@@ -189,9 +174,8 @@ class GeneralErrorGen(__BaseErrorGen):
         """
         types = self.ALLOWED_EPGC_TYPES
         if not isinstance(epgc_list, list):
-            type_ = type(epgc_list).__name__
             raise TypeError(f"epgc_list should be of type list but is of type"
-                            f" {type_}")
+                            f" {type(epgc_list).__name__}")
         if not all([isinstance(epgc, types) for epgc in epgc_list]):
             types = set([type(x).__name__ for x in epgc_list])
             raise TypeError("epgc_list should be list of "
@@ -200,7 +184,7 @@ class GeneralErrorGen(__BaseErrorGen):
 
         if clear_generator:
             self.gen = self.generator_class()
-        self.epgc_list = epgc_list
+
         self.errors = {}
         for epgc in self.epgc_list:
             if isinstance(epgc, ErrorProneGateCollection):
@@ -245,94 +229,12 @@ class GeneralErrorGen(__BaseErrorGen):
         for symbol, gate_locations, _ in circuit.items(tick=tick_index):
             self.gen.create_errors(self, symbol, gate_locations, after,
                                    before, replace)
-        self.error_circuits.add_circuits(time, before, after)
+
+        # add idle errors
         idle_qudits = circuit.qudits - circuit.active_qudits[tick_index]
-        # print("qudits:", circuit.qudits)
-        # print("active qudits:", circuit.active_qudits[tick_index])
-        # print("idle qudits:", idle_qudits)
         self.gen.create_errors(self, 'idle', idle_qudits, after,
                                before, replace)
+
+        # add faults to circuit
+        self.error_circuits.add_circuits(time, before, after)
         return self.error_circuits
-
-
-class XErrorGen(GeneralErrorGen):
-    """Generate X errors only on all types of gates"""
-    @staticmethod
-    def gen_error_prone_gates():
-        return [ErrorProneGateCollection(symbol="init", ep_gates=_INITS_ALL,
-                                         param="r",
-                                         error_gates=_PAULI_X,
-                                         before=False, after=True),
-                ErrorProneGateCollection(symbol="one qubit",
-                                         ep_gates=_ONE_QUBIT_GATES,
-                                         param="p",
-                                         error_gates=_PAULI_X,
-                                         before=False, after=True),
-                ErrorProneGateCollection(symbol="two qubit",
-                                         ep_gates=_TWO_QUBIT_GATES,
-                                         param="p",
-                                         error_gates=_PAULI_X,
-                                         before=False, after=True),
-                ErrorProneGateCollection(symbol="measure",
-                                         ep_gates=_MEASURE_ALL,
-                                         param="s",
-                                         error_gates=_PAULI_X,
-                                         before=True, after=False),
-                ]
-
-
-class ZErrorGen(GeneralErrorGen):
-    """Generate Z errors only on all types of gates"""
-    @staticmethod
-    def gen_error_prone_gates():
-        return [ErrorProneGateCollection(symbol="init", ep_gates=_INITS_ALL,
-                                         param="r",
-                                         error_gates=_PAULI_Z,
-                                         before=False, after=True),
-                ErrorProneGateCollection(symbol="one qubit",
-                                         ep_gates=_ONE_QUBIT_GATES,
-                                         param="p",
-                                         error_gates=_PAULI_Z,
-                                         before=False, after=True),
-                ErrorProneGateCollection(symbol="two qubit",
-                                         ep_gates=_TWO_QUBIT_GATES,
-                                         param="p",
-                                         error_gates=_PAULI_Z,
-                                         before=False, after=True),
-                ErrorProneGateCollection(symbol="measure",
-                                         ep_gates=_MEASURE_ALL,
-                                         param="s",
-                                         error_gates=_PAULI_Z,
-                                         before=True, after=False),
-                ]
-
-
-class CodeCapacityGen(GeneralErrorGen):
-    """Generate code capacity noise
-
-    Generate errors on all one-qubit gates, inits and measurements
-    with error parameters:
-        -r: init       qubit initialization
-        -p: one qubit  one qubit gates
-        -s: measure    measurement
-    """
-    @staticmethod
-    def gen_error_prone_gates():
-        return [ErrorProneGateCollection(symbol="init", ep_gates=_INITS_ALL,
-                                         param="r",
-                                         error_gates=_PAULI_Z,
-                                         before=False, after=True),
-                ErrorProneGateCollection(symbol="one qubit",
-                                         ep_gates=_ONE_QUBIT_GATES,
-                                         param="p",
-                                         error_gates=_PAULI_Z,
-                                         before=False, after=True),
-                ErrorProneGateCollection(symbol="measure",
-                                         ep_gates=_MEASURE_ALL,
-                                         param="s",
-                                         error_gates=_PAULI_Z,
-                                         before=True, after=False),
-                IdleErrorCollection(symbol="idle", param="i",
-                                    error_gates=_PAULI_ERRORS,
-                                    before=False, after=True),
-                ]
