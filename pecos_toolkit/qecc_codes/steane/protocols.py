@@ -37,6 +37,11 @@ class SteaneProtocol(object):
         return RUNNER.run(circ.simulator(), circ, *args, **kwargs)
 
     @staticmethod
+    def init_logical_one(*args, **kwargs):
+        state = SteaneProtocol.init_logical_zero(*args, **kwargs).state
+        return RUNNER.run(Logical.LogicalPauli("X"), state, *args, **kwargs)
+
+    @staticmethod
     def idle_data_qubits(state, *args, **kwargs):
         circ = Steane.IdleDataBlock()
         return RUNNER.run(state, circ, *args, **kwargs)
