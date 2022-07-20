@@ -12,8 +12,7 @@ from pecos_toolkit.qecc_codes.steane.circuits import Measurement
 
 
 class LogicalZeroInitialization(Steane.BaseSteaneCirc):
-    """
-    """
+    """Logical initalization circuit"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,6 +30,30 @@ class LogicalZeroInitialization(Steane.BaseSteaneCirc):
                               self.EDGE_BOTTOM_QUBIT)})
         self.append("CNOT", {(self.CORNER_RIGHT_QUBIT, self.CENTER_QUBIT)})
         self.append("CNOT", {(self.CORNER_RIGHT_QUBIT, self.EDGE_RIGHT_QUBIT)})
+
+
+class CompactLogicalZeroInitialization(Steane.BaseSteaneCirc):
+    """Higly parallelized version of the LogicalZeroInitialization circuit
+
+    This version has fewer idle locations
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.append("init |0>", set(self.DATA_QUBITS))
+        self.append("H", {self.CORNER_TOP_QUBIT})
+        self.update("H", {self.CORNER_LEFT_QUBIT})
+        self.update("H", {self.CORNER_RIGHT_QUBIT})
+        self.append("CNOT", {(self.CORNER_TOP_QUBIT, self.EDGE_LEFT_QUBIT)})
+        self.update("CNOT", {(self.CORNER_LEFT_QUBIT, self.CENTER_QUBIT)})
+        self.update("CNOT", {(self.CORNER_RIGHT_QUBIT,
+                              self.EDGE_BOTTOM_QUBIT)})
+        self.append("CNOT", {(self.CORNER_TOP_QUBIT, self.CENTER_QUBIT)})
+        self.update("CNOT", {(self.CORNER_LEFT_QUBIT, self.EDGE_LEFT_QUBIT)})
+        self.update("CNOT", {(self.CORNER_RIGHT_QUBIT, self.EDGE_RIGHT_QUBIT)})
+        self.append("CNOT", {(self.CORNER_TOP_QUBIT, self.EDGE_RIGHT_QUBIT)})
+        self.update("CNOT", {(self.CORNER_LEFT_QUBIT, self.EDGE_BOTTOM_QUBIT)})
+        self.update("CNOT", {(self.CORNER_RIGHT_QUBIT, self.CENTER_QUBIT)})
 
 
 class LogicalPauli(Steane.BaseSteaneCirc):
