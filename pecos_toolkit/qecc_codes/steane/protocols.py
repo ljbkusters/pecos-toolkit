@@ -147,12 +147,14 @@ class F1FTECProtocol(object):
             "SyndromeMeasResults", "syndrome flag_syndrome faults")
 
     @staticmethod
-    def verified_init_logical_zero(*args, **kwargs):
-        verification_circ = Verification.VerifyLogicalZeroStateCirc()
+    def verified_init_logical_zero(
+            init_circ=Logical.LogicalZeroInitialization(),
+            verification_circ=Verification.VerifyLogicalZeroStateCirc(),
+            *args, **kwargs):
         flag_bit = verification_circ.FLAG_QUBIT
         while True:
-            state = SteaneProtocol.init_logical_zero(*args, **kwargs).state
-            res = RUNNER.run(state, verification_circ, *args, **kwargs)
+            state = init_circ.run(*args, **kwargs).state
+            res = verification_circ.run(state, *args, **kwargs)
             flagged = bool(res.measurements.last().syndrome[flag_bit])
             if not flagged:
                 break
