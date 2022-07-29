@@ -134,11 +134,11 @@ class GeneralErrorGen(__BaseErrorGen):
         calling this method after init time with the proper parameters
 
         Args:
-            epgc_list, list of ErrorProneGateCollecion or IdleErrorCollection
+            epgc_list, list of ErrorProneGateCollection or IdleErrorCollection
                 tracks which gates are error prone / if idle locations can
                 have errors.
         """
-        self.epgc_list = self.epgc_list
+        self.epgc_list = epgc_list
         self.configure_generator_from_epgc_list(self.epgc_list)
 
     def reconfigure(self):
@@ -159,7 +159,7 @@ class GeneralErrorGen(__BaseErrorGen):
 
         This method implements the automatic initialization of all objects
         in the epgc_list list, which should ocntain exclusively
-        ErrorProngeGateCollection (epgc) objects or by exception for
+        ErrorProneGateCollection (epgc) objects or by exception for
         idle errors which do not specify gates to operate on but act only
         on idle qubits IdleErrorCollection (iec).
 
