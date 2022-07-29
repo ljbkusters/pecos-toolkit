@@ -20,7 +20,7 @@ class VerifyLogicalZeroStateCirc(Steane.BaseSteaneCirc):
         super().__init__(*args, **kwargs)
         self.FLAG_QUBIT = self.FLAG_QUBITS[0]
         self.append("init |0>", {self.FLAG_QUBIT})
-        self.append("CNOT", {(self.EDGE_LEFT_QUBIT, self.FLAG_QUBIT)})
+        #self.append("CNOT", {(self.EDGE_LEFT_QUBIT, self.FLAG_QUBIT)})
         self.append("CNOT", {(self.EDGE_BOTTOM_QUBIT, self.FLAG_QUBIT)})
         self.append("CNOT", {(self.EDGE_RIGHT_QUBIT, self.FLAG_QUBIT)})
         self.append("measure Z", {self.FLAG_QUBIT})
