@@ -218,9 +218,9 @@ class F1FTECProtocol(object):
             syndrome, faults = SteaneProtocol.measure_stabilizers(
                     state, stabs, *args, **kwargs)
             corr_qubits, corr_pauli_type = decoder.lot_decoder(syndrome)
-            print("Syndrome:", syndrome)
-            print("LOT:", decoder.LOT)
-            print("correcting with:", corr_qubits, corr_pauli_type)
+            # print("Syndrome:", syndrome)
+            # print("LOT:", decoder.LOT)
+            # print("correcting with:", corr_qubits, corr_pauli_type)
             if corr_qubits is not None:
                 if not hasattr(corr_qubits, "__iter__"):
                     corr_qubits = (corr_qubits,)
