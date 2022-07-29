@@ -118,9 +118,9 @@ class SteaneProtocol(object):
         return res
 
     @staticmethod
-    def decode_state(state, *args, **kwargs):
+    def decode_state(state, measure_basis="Z", *args, **kwargs):
         """Decode a logical state with an extra classical steane round"""
-        circ = Measurement.DataStateMeasurement()
+        circ = Measurement.DataStateMeasurement(measure_basis=measure_basis)
         decoder = Syndrome.SteaneSyndromeDecoder()
         res = RUNNER.run(state, circ, *args, **kwargs)
         bits = res.measurements.last().syndrome
