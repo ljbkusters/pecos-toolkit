@@ -202,14 +202,29 @@ class F1FTECProtocol(object):
                     state, syndrome[pauli_type][0], *args, **kwargs)
 
     @staticmethod
-    def correct_from_flagged_circuit(state, stabs, stab, *args, **kwargs):
-        decoder = Syndrome.FlaggedSyndromeDecoder(stab)
-        syndrome, faults = SteaneProtocol.measure_stabilizers(
-                state, stabs, *args, **kwargs)
-        corr_qubits, corr_pauli_type = decoder.lot_decoder(syndrome)
+    def correct_from_flagged_circuit(state, stab, *args, **kwargs):
+        """Correct a flagged stabilizer circuit.
+
+        """
+        modified_decoder = Syndrome.FlaggedSyndromeDecoder(stab)
+        normal_decoder = Syndrome.SteaneSyndromeDecoder()
         circ = Steane.BaseSteaneCirc()
-        if corr_qubits is not None:
-            circ.append(corr_pauli_type, set(corr_qubits))
+        for stabs in (Steane.BaseSteaneData.x_stabilizers,
+                      Steane.BaseSteaneData.z_stabilizers):
+            if stab not in stabs:
+                decoder =modified_decoder
+            else:
+                decoder =  normal_decoder
+            syndrome, faults = SteaneProtocol.measure_stabilizers(
+                    state, stabs, *args, **kwargs)
+            corr_qubits, corr_pauli_type = decoder.lot_decoder(syndrome)
+            print("Syndrome:", syndrome)
+            print("LOT:", decoder.LOT)
+            print("correcting with:", corr_qubits, corr_pauli_type)
+            if corr_qubits is not None:
+                if not hasattr(corr_qubits, "__iter__"):
+                    corr_qubits = (corr_qubits,)
+                circ.append(corr_pauli_type, set(corr_qubits))
         return RUNNER.run(state, circ, *args, **kwargs)
 
     @staticmethod
