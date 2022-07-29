@@ -80,25 +80,18 @@ class F1FlagCircData(object):
 
 class F1FTECStabMeasCircuitData(StabMeasCircuitData):
     FLAG_QUBIT = 8
+    FLAG_INIT_TYPE = "init |0>"
+    FLAG_MEAS_TYPE = "measure Z"
 
 
 class F1FTECStabMeasCircuit(StabMeasCircuit, F1FTECStabMeasCircuitData):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.stabilizer.pauli_type == "Z":
-            init_type = "init |+>"
-            meas_type = "measure X"
-        elif self.stabilizer.pauli_type == "X":
-            init_type = "init |0>"
-            meas_type = "measure Z"
-        else:
-            raise ValueError("stabilizer.pauli_type should be one of"
-                             " ('Z', 'X')")
         self.f1_flag_circ = F1FlagCircData(flag_qubit=self.FLAG_QUBIT,
                                            flag_from_qubit=self.ANCILLA_QUBIT,
                                            gutter_1=2, gutter_2=4,
                                            init_loc=0, meas_loc=5,
-                                           meas_type=meas_type,
-                                           init_type=init_type)
+                                           meas_type=self.FLAG_MEAS_TYPE,
+                                           init_type=self.FLAG_INIT_TYPE)
         self.f1_flag_circ.inject_flag_circuit(self)
