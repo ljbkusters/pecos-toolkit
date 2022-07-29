@@ -35,9 +35,15 @@ class StabMeasCircuit(Steane.BaseSteaneCirc, StabMeasCircuitData):
 
 
 class DataStateMeasurement(Steane.BaseSteaneCirc):
-    def __init__(self, *args, **kwargs):
+    ALLOWED_BASES = ("Z", "X")
+
+    def __init__(self, measure_basis="Z",  *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.append("measure Z", set(self.DATA_QUBITS))
+        if measure_basis not in self.ALLOWED_BASES:
+            raise ValueError("keyword argument measure_basis should be one of"
+                             f"{self.ALLOWED_BASES}")
+        self.measure_basis = measure_basis
+        self.append(f"measure {self.measure_basis}", set(self.DATA_QUBITS))
 
 
 class F1FlagCircData(object):
