@@ -59,16 +59,6 @@ class SteaneSyndromeDecoder(object):
 
 class FlaggedSyndromeDecoder(SteaneSyndromeDecoder):
 
-    LOT = {"000": None,
-           "001": (6, ),
-           "010": (4, ),
-           "011": (5, ),
-           "100": (0, ),
-           "101": (3, ),
-           "110": (1, ),
-           "111": (2, ),
-           }
-
     KEY_FROM_CORRECTION = {
             (2, 3): "010",
             (3, 2): "010",
@@ -80,6 +70,16 @@ class FlaggedSyndromeDecoder(SteaneSyndromeDecoder):
 
     def __init__(self, stab, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        correction = stab.qubits[1:3]
+        self.LOT = {"000": None,
+                    "001": (6, ),
+                    "010": (4, ),
+                    "011": (5, ),
+                    "100": (0, ),
+                    "101": (3, ),
+                    "110": (1, ),
+                    "111": (2, ),
+                    }
+
+        correction = stab.qubits[2:4]
         key = self.KEY_FROM_CORRECTION[correction]
         self.LOT[key] = correction
