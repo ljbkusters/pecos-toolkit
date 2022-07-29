@@ -70,3 +70,10 @@ class LogicalPauli(Steane.BaseSteaneCirc):
         super().__init__(*args, **kwargs)
         if logical == "all":
             self.append("pauli_type", set(self.LOGICALS[logical]))
+
+class TransverseSingleQubitGate(Steane.BaseSteaneCirc):
+    """Transverse single qubit gate, applied to all data qubits"""
+
+    def __init__(self, gate, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.append(gate, set(self.DATA_QUBITS))
