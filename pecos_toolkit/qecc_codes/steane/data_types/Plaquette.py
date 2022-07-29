@@ -49,6 +49,9 @@ class Stabilizer(Plaquette):
                             " initialization.")
         return cls(pauli_type, *plaquette.qubits)
 
+    def __repr__(self):
+        return f"{self.pauli_type} Stabilizer on qubits {self.qubits}"
+
 
 class XStabilizer(Stabilizer):
     def __init__(self, *args, **kwargs):
