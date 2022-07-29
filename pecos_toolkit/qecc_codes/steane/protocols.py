@@ -118,34 +118,6 @@ class SteaneProtocol(object):
         return res
 
     @staticmethod
-    def classical_correction_decoding(data_syndrome):
-        """ decode a codeword with classical correction
-
-        a minimum_distance correction is applied to simulate a round
-        of classical error correction. If the distance to a logical 0
-        codeword is smaller than the distance to a logical 1 codeword,
-        one can assume that the state should have encoded a logical 0
-        (and vice versa).  If both distances are 2, None is again
-        returned because no clear preference can be made for either
-        a logical 0 or logical 1.
-        """
-        data = Steane.BaseSteaneData()
-        zero_code_word_distance = \
-            data.min_distance_to_logical_codewords(data_syndrome, 0)
-        one_code_word_distance = \
-            data.min_distance_to_logical_codewords(data_syndrome, 1)
-        if zero_code_word_distance < one_code_word_distance:
-            return 0
-        elif zero_code_word_distance > one_code_word_distance:
-            return 1
-        elif (zero_code_word_distance == 2 and
-              one_code_word_distance == 2):
-            return None
-        else:
-            raise RuntimeError("I think this case should not occur but"
-                               " maybe it does???")
-
-    @staticmethod
     def decode_state(state, *args, **kwargs):
         """Decode a logical state with an extra classical steane round"""
         circ = Measurement.DataStateMeasurement()
@@ -166,43 +138,6 @@ class SteaneProtocol(object):
         logical_bit = sum([bits[i] for i in (0, 1, 4)]) % 2
         # TODO more robust logical def. here ^^^^^^^
         return logical_bit
-
-    @staticmethod
-    def decode_data_codeword(syndrome, with_classical_correction=False):
-        # WARNING: DEPRICATED
-        """Get the codeword type from the data state measurement
-
-        If a measurement syndrome is a logical 0 or logical 1 codeword
-        (defined by the stabilizers for logical 0 and a stabilizer +
-        logical for logical 1) it will return  0 or 1 respectively.
-        Otherwise it will return None (as it is neither a logical 0 or
-        1 state).
-
-        If with_classical_correction is set to True, the classical
-        correction decoder is used as well
-
-        Args:
-            syndrome, measurement syndrome of data qubits
-            with_classical_correction, bool to switch on classical error
-                                       correction simulation
-        Returns:
-            best guess for logical state (0 or 1) or None if no preference
-            can be determined.
-        """
-        data = Steane.BaseSteaneData()
-        min_qubit = min(data.DATA_QUBITS)
-        max_qubit = max(data.DATA_QUBITS)
-        data_syndrome = tuple(syndrome[min_qubit:max_qubit+1])
-        if data_syndrome in data.logical_zero_codewords:
-            return 0
-        elif data_syndrome in data.logical_one_codewords:
-            return 1
-        else:
-            if with_classical_correction:
-                return SteaneProtocol.classical_correction_decoding(
-                        data_syndrome)
-            else:
-                return None
 
 
 class F1FTECProtocol(object):
