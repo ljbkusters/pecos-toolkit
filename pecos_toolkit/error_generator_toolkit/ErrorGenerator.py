@@ -39,11 +39,11 @@ _MEASURE_ALL = {*_MEASURE_X, *_MEASURE_Y, *_MEASURE_Z}
 # named tuple type factories
 GateError = collections.namedtuple("_GATE_ERROR", ("error_param", "after"))
 
-ErrorProneGateCollection = collections.namedtuple("_ErrorProneGateCollection",
+ErrorProneGateCollection = collections.namedtuple("ErrorProneGateCollection",
                                                   ("symbol", "ep_gates",
                                                    "param", "error_gates",
                                                    "before", "after"))
-IdleErrorCollection = collections.namedtuple("_IdleErrorCollection",
+IdleErrorCollection = collections.namedtuple("IdleErrorCollection",
                                              ("symbol", "param", "error_gates",
                                               "before", "after"))
 
