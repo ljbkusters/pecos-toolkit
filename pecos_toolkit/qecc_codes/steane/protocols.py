@@ -242,3 +242,54 @@ class F1FTECProtocol(object):
         flag_qubit = Measurement.F1FTECStabMeasCircuitData.FLAG_QUBIT
         flag = res.measurements.last().syndrome[flag_qubit]
         return bool(flag)
+
+
+def verified_init_only(*args, **kwargs):
+    zero_state = \
+            F1FTECProtocol.verified_init_logical_zero(*args, **kwargs).state
+    return SteaneProtocol.decode_state(zero_state)
+
+
+def steane_round(*args, **kwargs):
+    zero_state = SteaneProtocol.init_logical_zero(*args, **kwargs).state
+    SteaneProtocol.idle_data_qubits(zero_state, *args, **kwargs)
+    SteaneProtocol.full_steane_round(zero_state, *args, **kwargs)
+    return SteaneProtocol.decode_state(zero_state)
+
+
+def verified_init_f1ftec_round(*args, **kwargs):
+    zero_state = (F1FTECProtocol.verified_init_logical_zero(*args, **kwargs)
+                  .state)
+    F1FTECProtocol.f1ftec_round(zero_state, *args, **kwargs)
+    return SteaneProtocol.decode_state(zero_state)
+
+
+def f1ftec_init_only(*args, **kwargs):
+    # init using steane round
+    physical_zero_state = (SteaneProtocol.init_physical_zero(*args, **kwargs)
+                           .state)
+    zero_state, _, _ = F1FTECProtocol.full_steane_round(physical_zero_state,
+                                                        *args, **kwargs)
+    return SteaneProtocol.decode_state(zero_state)
+
+
+def steane_round_init_f1ftec_round(*args, **kwargs):
+    # init using steane round
+    physical_zero_state = (SteaneProtocol.init_physical_zero(*args, **kwargs)
+                           .state)
+    # after one (errorless) round, the state should be in the physical zero
+    # state
+    zero_state, _, _ = F1FTECProtocol.full_steane_round(physical_zero_state,
+                                                        *args, **kwargs)
+    # FT protocol
+    F1FTECProtocol.f1ftec_round(zero_state, *args, **kwargs)
+    return SteaneProtocol.decode_state(zero_state)
+
+
+simulation_function_map = {
+        "standard_steane": steane_round,
+        "verified_f1ftec": verified_init_f1ftec_round,
+        "f1ftec_init_only": f1ftec_init_only,
+        "verified_init_only": verified_init_only,
+        "steane_init_f1ftec": verified_init_f1ftec_round,
+        }
