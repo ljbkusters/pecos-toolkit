@@ -20,16 +20,29 @@ class LogicalZeroInitialization(Steane.BaseSteaneCirc):
         self.append("H", {self.CORNER_TOP_QUBIT})
         self.update("H", {self.CORNER_LEFT_QUBIT})
         self.update("H", {self.CORNER_RIGHT_QUBIT})
+
         self.append("CNOT", {(self.CORNER_TOP_QUBIT, self.EDGE_LEFT_QUBIT)})
-        self.append("CNOT", {(self.CORNER_TOP_QUBIT, self.CENTER_QUBIT)})
         self.append("CNOT", {(self.CORNER_TOP_QUBIT, self.EDGE_RIGHT_QUBIT)})
+        self.append("CNOT", {(self.CORNER_TOP_QUBIT, self.CENTER_QUBIT)})
+
         self.append("CNOT", {(self.CORNER_LEFT_QUBIT, self.EDGE_LEFT_QUBIT)})
-        self.append("CNOT", {(self.CORNER_LEFT_QUBIT, self.CENTER_QUBIT)})
         self.append("CNOT", {(self.CORNER_LEFT_QUBIT, self.EDGE_BOTTOM_QUBIT)})
+        self.append("CNOT", {(self.CORNER_LEFT_QUBIT, self.CENTER_QUBIT)})
+
         self.append("CNOT", {(self.CORNER_RIGHT_QUBIT,
                               self.EDGE_BOTTOM_QUBIT)})
-        self.append("CNOT", {(self.CORNER_RIGHT_QUBIT, self.CENTER_QUBIT)})
         self.append("CNOT", {(self.CORNER_RIGHT_QUBIT, self.EDGE_RIGHT_QUBIT)})
+        self.append("CNOT", {(self.CORNER_RIGHT_QUBIT, self.CENTER_QUBIT)})
+
+
+class VerifiedLogicalZeroInitialization(LogicalZeroInitialization):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.FLAG_QUBIT = self.FLAG_QUBITS[0]
+        self.append("init |0>", {self.FLAG_QUBIT})
+        self.append("CNOT", {(self.CENTER_QUBIT, self.FLAG_QUBIT)})
+        self.append("measure Z", {self.FLAG_QUBIT})
 
 
 class CompactLogicalZeroInitialization(Steane.BaseSteaneCirc):
@@ -70,6 +83,7 @@ class LogicalPauli(Steane.BaseSteaneCirc):
         super().__init__(*args, **kwargs)
         if logical == "all":
             self.append("pauli_type", set(self.LOGICALS[logical]))
+
 
 class TransverseSingleQubitGate(Steane.BaseSteaneCirc):
     """Transverse single qubit gate, applied to all data qubits"""
