@@ -71,6 +71,7 @@ class AlternativeVLZI(Steane.BaseSteaneCirc):
         self.append("CNOT", {(self.EDGE_LEFT_QUBIT, self.FLAG_QUBIT)})
         self.append("CNOT", {(self.EDGE_RIGHT_QUBIT, self.FLAG_QUBIT)})
         self.append("CNOT", {(self.EDGE_BOTTOM_QUBIT, self.FLAG_QUBIT)})
+        self.append("measure Z", {self.FLAG_QUBIT})
 
 
 class CompactLogicalZeroInitialization(Steane.BaseSteaneCirc):
