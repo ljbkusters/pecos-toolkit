@@ -15,7 +15,6 @@ import copy
 from pecos_toolkit.qecc_codes.steane.circuits import Steane
 from pecos_toolkit.qecc_codes.steane.circuits import Measurement
 from pecos_toolkit.qecc_codes.steane.circuits import Logical
-from pecos_toolkit.qecc_codes.steane.circuits import Verification
 from pecos_toolkit.qecc_codes.steane.protocols import SteaneProtocol
 from pecos_toolkit.qecc_codes.steane.protocols import F1FTECProtocol
 # from pecos_toolkit.qecc_codes.steane.protocols import F1FTECProtocol
@@ -75,61 +74,43 @@ def check_init_circ():
 
 
 def check_verified_init_circ():
-    logical_errors = 0
 
     def modified_verified_init_logical_zero(
-            init_circ=Logical.LogicalZeroInitialization(),
-            verification_circ=Verification.VerifyLogicalZeroStateCirc(),
+            err_circ=Logical.VerifiedLogicalZeroInitialization(),
+            circ=Logical.VerifiedLogicalZeroInitialization(),
             *args, **kwargs):
-        flag_bit = verification_circ.FLAG_QUBIT
-        while True:
-            state = init_circ.run(*args, **kwargs).state
-            res = verification_circ.run(state, *args, **kwargs)
-            flagged = bool(res.measurements.last().syndrome[flag_bit])
-            if flagged:
-                return None
-            else:
-                break
-        return res
+        flag_bit = circ.FLAG_QUBIT
+        res = err_circ.run(*args, **kwargs)
+        flagged = bool(res.measurements.last().syndrome[flag_bit])
+        if not flagged:
+            return False, res
+        else:
+            return True,\
+                    F1FTECProtocol.verified_init_logical_zero(*args, **kwargs)
 
-    init_circ = Logical.LogicalZeroInitialization()
-    verif_circ = Verification.VerifyLogicalZeroStateCirc()
+    logical_errors = 0
 
-    init_ft_checker = ErrorPlacer(init_circ, epgc_list)
+    circ = Logical.VerifiedLogicalZeroInitialization()
+
+    init_ft_checker = ErrorPlacer(circ, epgc_list)
     init_error_circs = init_ft_checker.generate_error_circuits()
     print("all errors on the init circ")
+    print(len(init_error_circs))
+    n_flagged = 0
     # erred init circs
     for error_circ, error_params in init_error_circs:
-        res = modified_verified_init_logical_zero(
-                init_circ=error_circ, verification_circ=verif_circ)
-        if res is None:  # fault correctly caught by flag!
-            print("Error caught by flag:")
+        flagged, res = modified_verified_init_logical_zero(
+                    err_circ=error_circ, circ=circ)
+        if flagged:
+            n_flagged += 1
+            print("Flagged for")
             print(error_params)
-            continue
         output_codeword = SteaneProtocol.decode_state(res.state)
         if output_codeword == 1:
             print("Logical error for error params:")
             print(error_params)
             logical_errors += 1
-    print()
-    print("all errors on the verification circ")
-    # erred verif circs
-    verif_ft_checker = ErrorPlacer(verif_circ, epgc_list)
-    verif_error_circs = verif_ft_checker.generate_error_circuits()
-    for error_circ, error_params in verif_error_circs:
-        res = modified_verified_init_logical_zero(
-                init_circ=init_circ, verification_circ=error_circ)
-        if res is None:  # fault correctly caught by flag!
-            print("Error caught by flag (if a logical error could have occured"
-                  " it was prevented):")
-            print(error_params)
-            continue
-        output_codeword = SteaneProtocol.decode_state(res.state)
-        if output_codeword == 1:
-            print("Logical error for error params:")
-            print(error_params)
-            logical_errors += 1
-    print(f"Final result: {logical_errors} logical errors")
+    print(f"{n_flagged} error circuits cause a flag")
     if logical_errors > 0:
         print("The circuit is NOT fault tolerant against the supplied error"
               " model")
@@ -231,9 +212,8 @@ def check_flag_syndrome_decoding():
         input("wating for next stabilizer... press [ENTER]")
 
 
-
 if __name__ == "__main__":
-    #check_init_circ()
-    #check_verified_init_circ()
-    #check_syndrome_decoding()
-    check_flag_syndrome_decoding()
+    check_init_circ()
+    check_verified_init_circ()
+    # check_syndrome_decoding()
+    # check_flag_syndrome_decoding()
