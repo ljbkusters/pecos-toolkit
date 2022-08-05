@@ -264,8 +264,8 @@ def f1ftec_stab_meas_only(*args, **kwargs):
     # init using steane round
     physical_zero_state = (SteaneProtocol.init_physical_zero(*args, **kwargs)
                            .state)
-    zero_state, _, _ = F1FTECProtocol.full_steane_round(physical_zero_state,
-                                                        *args, **kwargs)
+    zero_state, _, _ = F1FTECProtocol.f1ftec_round(physical_zero_state,
+                                                   *args, **kwargs)
     return SteaneProtocol.decode_state(zero_state)
 
 
