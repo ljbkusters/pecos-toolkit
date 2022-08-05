@@ -13,7 +13,6 @@ from pecos_toolkit.circuit_runner import ImprovedRunner
 from pecos_toolkit.qecc_codes.steane.circuits import Logical
 from pecos_toolkit.qecc_codes.steane.circuits import Measurement
 from pecos_toolkit.qecc_codes.steane.circuits import Steane
-from pecos_toolkit.qecc_codes.steane.circuits import Verification
 from pecos_toolkit.qecc_codes.steane.data_types import Syndrome
 
 
@@ -148,17 +147,14 @@ class F1FTECProtocol(object):
 
     @staticmethod
     def verified_init_logical_zero(
-            init_circ=Logical.LogicalZeroInitialization(),
-            verification_circ=Verification.VerifyLogicalZeroStateCirc(),
+            circ=Logical.VerifiedLogicalZeroInitialization(),
             *args, **kwargs):
-        flag_bit = verification_circ.FLAG_QUBIT
+        flag_bit = circ.FLAG_QUBIT
         while True:
-            state = init_circ.run(*args, **kwargs).state
-            res = verification_circ.run(state, *args, **kwargs)
+            res = circ.run(*args, **kwargs)
             flagged = bool(res.measurements.last().syndrome[flag_bit])
             if not flagged:
-                break
-        return res
+                return res
 
     @staticmethod
     def flag_measure_stabilizer(state, stab, *args, **kwargs):
