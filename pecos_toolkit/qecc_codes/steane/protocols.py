@@ -185,7 +185,7 @@ class F1FTECProtocol(object):
                     if F1FTECProtocol.is_flagged(res):
                         # print("detected flag")
                         return F1FTECProtocol.correct_from_flagged_circuit(
-                                state, stabs, stab, *args, **kwargs)
+                                state, stab, *args, **kwargs)
                 syndrome[pauli_type][i] = \
                     Syndrome.Syndrome(pauli_type, *syndrome[pauli_type][i])
         # no flags occured, check if syndromes were different
@@ -212,9 +212,9 @@ class F1FTECProtocol(object):
         for stabs in (Steane.BaseSteaneData.x_stabilizers,
                       Steane.BaseSteaneData.z_stabilizers):
             if stab not in stabs:
-                decoder =modified_decoder
+                decoder = modified_decoder
             else:
-                decoder =  normal_decoder
+                decoder = normal_decoder
             syndrome, faults = SteaneProtocol.measure_stabilizers(
                     state, stabs, *args, **kwargs)
             corr_qubits, corr_pauli_type = decoder.lot_decoder(syndrome)
@@ -244,16 +244,28 @@ class F1FTECProtocol(object):
         return bool(flag)
 
 
-def verified_init_only(*args, **kwargs):
-    zero_state = \
-            F1FTECProtocol.verified_init_logical_zero(*args, **kwargs).state
-    return SteaneProtocol.decode_state(zero_state)
+# SIMULATION FUNCTIONS
 
 
 def steane_round(*args, **kwargs):
     zero_state = SteaneProtocol.init_logical_zero(*args, **kwargs).state
     SteaneProtocol.idle_data_qubits(zero_state, *args, **kwargs)
     SteaneProtocol.full_steane_round(zero_state, *args, **kwargs)
+    return SteaneProtocol.decode_state(zero_state)
+
+
+def verified_init_only(*args, **kwargs):
+    zero_state = \
+            F1FTECProtocol.verified_init_logical_zero(*args, **kwargs).state
+    return SteaneProtocol.decode_state(zero_state)
+
+
+def f1ftec_stab_meas_only(*args, **kwargs):
+    # init using steane round
+    physical_zero_state = (SteaneProtocol.init_physical_zero(*args, **kwargs)
+                           .state)
+    zero_state, _, _ = F1FTECProtocol.full_steane_round(physical_zero_state,
+                                                        *args, **kwargs)
     return SteaneProtocol.decode_state(zero_state)
 
 
@@ -264,32 +276,9 @@ def verified_init_f1ftec_round(*args, **kwargs):
     return SteaneProtocol.decode_state(zero_state)
 
 
-def f1ftec_init_only(*args, **kwargs):
-    # init using steane round
-    physical_zero_state = (SteaneProtocol.init_physical_zero(*args, **kwargs)
-                           .state)
-    zero_state, _, _ = F1FTECProtocol.full_steane_round(physical_zero_state,
-                                                        *args, **kwargs)
-    return SteaneProtocol.decode_state(zero_state)
-
-
-def steane_round_init_f1ftec_round(*args, **kwargs):
-    # init using steane round
-    physical_zero_state = (SteaneProtocol.init_physical_zero(*args, **kwargs)
-                           .state)
-    # after one (errorless) round, the state should be in the physical zero
-    # state
-    zero_state, _, _ = F1FTECProtocol.full_steane_round(physical_zero_state,
-                                                        *args, **kwargs)
-    # FT protocol
-    F1FTECProtocol.f1ftec_round(zero_state, *args, **kwargs)
-    return SteaneProtocol.decode_state(zero_state)
-
-
 simulation_function_map = {
         "standard_steane": steane_round,
         "verified_f1ftec": verified_init_f1ftec_round,
-        "f1ftec_init_only": f1ftec_init_only,
         "verified_init_only": verified_init_only,
-        "steane_init_f1ftec": verified_init_f1ftec_round,
+        "f1ftec_stab_meas_only": f1ftec_stab_meas_only,
         }
