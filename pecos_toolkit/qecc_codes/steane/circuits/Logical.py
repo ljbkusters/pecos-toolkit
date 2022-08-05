@@ -45,6 +45,34 @@ class VerifiedLogicalZeroInitialization(LogicalZeroInitialization):
         self.append("measure Z", {self.FLAG_QUBIT})
 
 
+class AlternativeVLZI(Steane.BaseSteaneCirc):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.FLAG_QUBIT = self.FLAG_QUBITS[0]
+        self.append("init |0>", set(self.DATA_QUBITS))
+
+        self.append("H", {self.CORNER_TOP_QUBIT})
+        self.update("H", {self.CORNER_LEFT_QUBIT})
+        self.update("H", {self.CORNER_RIGHT_QUBIT})
+
+        self.append("CNOT", {(self.CORNER_TOP_QUBIT, self.EDGE_LEFT_QUBIT)})
+        self.append("CNOT", {(self.CORNER_RIGHT_QUBIT, self.EDGE_RIGHT_QUBIT)})
+        self.append("CNOT", {(self.CORNER_LEFT_QUBIT, self.EDGE_BOTTOM_QUBIT)})
+
+        self.append("CNOT", {(self.CORNER_TOP_QUBIT, self.CENTER_QUBIT)})
+        self.append("CNOT", {(self.CORNER_LEFT_QUBIT, self.EDGE_LEFT_QUBIT)})
+        self.append("CNOT", {(self.CORNER_RIGHT_QUBIT,
+                              self.EDGE_BOTTOM_QUBIT)})
+        self.append("CNOT", {(self.CORNER_TOP_QUBIT, self.EDGE_RIGHT_QUBIT)})
+        self.append("CNOT", {(self.EDGE_BOTTOM_QUBIT, self.CENTER_QUBIT)})
+
+        # verification
+        self.append("init |0>", {self.FLAG_QUBIT})
+        self.append("CNOT", {(self.EDGE_LEFT_QUBIT, self.FLAG_QUBIT)})
+        self.append("CNOT", {(self.EDGE_RIGHT_QUBIT, self.FLAG_QUBIT)})
+        self.append("CNOT", {(self.EDGE_BOTTOM_QUBIT, self.FLAG_QUBIT)})
+
+
 class CompactLogicalZeroInitialization(Steane.BaseSteaneCirc):
     """Higly parallelized version of the LogicalZeroInitialization circuit
 

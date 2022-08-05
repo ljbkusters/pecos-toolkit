@@ -147,7 +147,7 @@ class F1FTECProtocol(object):
 
     @staticmethod
     def verified_init_logical_zero(
-            circ=Logical.VerifiedLogicalZeroInitialization(),
+            circ=Logical.AlternativeVLZI(),
             *args, **kwargs):
         flag_bit = circ.FLAG_QUBIT
         while True:
