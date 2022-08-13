@@ -119,7 +119,7 @@ class __BaseErrorGen(pecos.error_gens.parent_class_error_gen.ParentErrorGen):
                                   .format(type(self).__name__))
 
     def __repr__(self):
-        return self.epgc_list
+        return str(self.epgc_list)
 
 
 class GeneralErrorGen(__BaseErrorGen):
