@@ -6,6 +6,7 @@ steane.py
 @date 07-06-2022
 """
 
+import numpy
 import collections
 
 # from toolkits.error_generator_toolkit import ErrorGenerator
@@ -306,6 +307,62 @@ def verified_init_f1ftec_round(*args, **kwargs):
     F1FTECProtocol.f1ftec_round(zero_state, *args, **kwargs)
     # perfect decoding makes sure the final result is the true state
     return SteaneProtocol.decode_state(zero_state)
+
+
+def rnn_data_gen(init_parity=0, correction_steps=1, basis="Z",
+                 *args, **kwargs):
+    """
+    Output should be:
+        vector of dim 12 for each time step
+            -> for the X and Z stabilizers
+                - 3 syndrome increment bits
+                - 3 flag bits
+        vector of dim 3 with final increments (depending on measurement basis)
+        one bit with the true final parity
+    """
+
+    ALLOWED_INIT_PARITY = (0, 1)
+    if init_parity not in ALLOWED_INIT_PARITY:
+        raise ValueError(f"kwarg init_parity (val: {init_parity}) must be one"
+                         f" of {ALLOWED_INIT_PARITY}")
+    ALLOWED_BASIS = ("Z", "X")
+    if basis not in ALLOWED_BASIS:
+        raise ValueError(f"kwarg init_parity (val: {basis}) must be one"
+                         f" of {ALLOWED_BASIS}")
+
+    state = F1FTECProtocol.verified_init_logical_zero(*args, **kwargs).state
+
+    if init_parity == 1:
+        Logical.LogicalPauli("X").run(state, *args, **kwargs)
+
+    if basis == "X":
+        Logical.TransverseSingleQubitGate("H").run(state, *args, **kwargs)
+
+    # which stabilizers to read given the input basis
+    # (each basis requires its own decoder)
+    stab_basis = "Z" if basis == "X" else "X"
+
+    data = RNNDataTypes.RNNSyndromeData()
+    for step_idx in range(correction_steps):
+        res = F1FTECProtocol.f1ftec_rnn_data_generation(
+            state, *args, **kwargs)
+        data = data.extend(res)
+    # one more check for F1FTEC ensurance
+    if data.last_flagged() or data.last_incremented():
+        res = F1FTECProtocol.f1ftec_rnn_data_generation(
+            state, *args, **kwargs)
+        data.extend(res)
+    logical_parity, classical_stab_parities = \
+        SteaneProtocol.decode_state_base(state, measure_basis=basis)
+    final_increment = RNNDataTypes.BaseSyndromeData.calc_increment(
+            data[stab_basis].syndrome[-1], classical_stab_parities)
+    return RNNDataTypes.RNNData(
+            stabilizer_data=data,
+            final_syndrome_increment=final_increment,
+            final_parity=logical_parity,
+            basis=basis,
+            original_parity=init_parity,
+            )
 
 
 simulation_function_map = {
