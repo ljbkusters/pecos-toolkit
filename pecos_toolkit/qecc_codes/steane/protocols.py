@@ -256,12 +256,14 @@ def steane_round(*args, **kwargs):
     zero_state = SteaneProtocol.init_logical_zero(*args, **kwargs).state
     SteaneProtocol.idle_data_qubits(zero_state, *args, **kwargs)
     SteaneProtocol.full_steane_round(zero_state, *args, **kwargs)
+    # perfect decoding makes sure the final result is the true state
     return SteaneProtocol.decode_state(zero_state)
 
 
 def verified_init_only(*args, **kwargs):
     zero_state = \
             F1FTECProtocol.verified_init_logical_zero(*args, **kwargs).state
+    # perfect decoding makes sure the final result is the true state
     return SteaneProtocol.decode_state(zero_state)
 
 
@@ -271,6 +273,7 @@ def f1ftec_stab_meas_only(*args, **kwargs):
                            .state)
     zero_state, _, _ = F1FTECProtocol.f1ftec_round(physical_zero_state,
                                                    *args, **kwargs)
+    # perfect decoding makes sure the final result is the true state
     return SteaneProtocol.decode_state(zero_state)
 
 
@@ -278,6 +281,7 @@ def verified_init_f1ftec_round(*args, **kwargs):
     zero_state = (F1FTECProtocol.verified_init_logical_zero(*args, **kwargs)
                   .state)
     F1FTECProtocol.f1ftec_round(zero_state, *args, **kwargs)
+    # perfect decoding makes sure the final result is the true state
     return SteaneProtocol.decode_state(zero_state)
 
 
