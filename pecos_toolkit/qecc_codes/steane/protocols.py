@@ -117,8 +117,13 @@ class SteaneProtocol(object):
         return res
 
     @staticmethod
-    def decode_state(state, measure_basis="Z", *args, **kwargs):
-        """Decode a logical state with an extra classical steane round"""
+    def decode_state_base(state, measure_basis="Z", *args, **kwargs):
+        """Decode a logical state with an extra classical steane round
+
+        Returns:
+            logical parity, classical steane parity in order top, left, right
+            stabilizer
+        """
         circ = Measurement.DataStateMeasurement(measure_basis=measure_basis)
         decoder = Syndrome.SteaneSyndromeDecoder()
         res = RUNNER.run(state, circ, *args, **kwargs)
@@ -136,7 +141,11 @@ class SteaneProtocol(object):
             bits[correction] = (bits[correction] + 1) % 2
         logical_bit = sum([bits[i] for i in (0, 1, 4)]) % 2
         # TODO more robust logical def. here ^^^^^^^
-        return logical_bit
+        return logical_bit, [top_plaq, left_plaq, right_plaq]
+
+    def decode_state(*args, **kwargs):
+        """wrapper for decode_state_base where only logical bit is returned"""
+        return SteaneProtocol.decode_state_base(*args, **kwargs)[0]
 
 
 class F1FTECProtocol(object):
