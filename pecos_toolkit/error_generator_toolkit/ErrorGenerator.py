@@ -37,7 +37,7 @@ _MEASURE_Z = {"measure Z"}
 _MEASURE_ALL = {*_MEASURE_X, *_MEASURE_Y, *_MEASURE_Z}
 
 # named tuple type factories
-GateError = collections.namedtuple("_GATE_ERROR", ("error_param", "after"))
+GateError = collections.namedtuple("GateError", ("error_param", "after"))
 
 ErrorProneGateCollection = collections.namedtuple("ErrorProneGateCollection",
                                                   ("symbol", "ep_gates",
@@ -61,7 +61,7 @@ FlipXInit = ErrorProneGateCollection(
                 before=False, after=True,
                 )
 FlipZMeasurement = ErrorProneGateCollection(
-                symbol="measure_x",
+                symbol="measure_z",
                 ep_gates={"measure Z"},
                 param="meas", error_gates={"X"},
                 before=True, after=False,
