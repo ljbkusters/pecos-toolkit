@@ -14,6 +14,7 @@ from pecos_toolkit.qecc_codes.steane.circuits import Logical
 from pecos_toolkit.qecc_codes.steane.circuits import Measurement
 from pecos_toolkit.qecc_codes.steane.circuits import Steane
 from pecos_toolkit.qecc_codes.steane.data_types import Syndrome
+from pecos_toolkit.qecc_codes.steane.data_types import RNNDataTypes
 
 
 RUNNER = ImprovedRunner(random_seed=True)
@@ -205,6 +206,28 @@ class F1FTECProtocol(object):
             # print("no flag, syndromes match")
             return SteaneProtocol.correct_from_syndrome(
                     state, syndrome[pauli_type][0], *args, **kwargs)
+
+    @staticmethod
+    def f1ftec_rnn_data_generation(state, *args, **kwargs):
+        rnn_syndrome_data = RNNDataTypes.RNNSyndromeData()
+        ancilla_qubit = Measurement.F1FTECStabMeasCircuitData.ANCILLA_QUBIT
+        flag_qubit = Measurement.F1FTECStabMeasCircuitData.FLAG_QUBIT
+        x_stabs = Steane.BaseSteaneData.x_stabilizers
+        z_stabs = Steane.BaseSteaneData.z_stabilizers
+        for pauli_type, stabs in {"X": x_stabs, "Z": z_stabs}.items():
+            ancilla_bits = []
+            flag_bits = []
+            for stab in stabs:
+                res = F1FTECProtocol.flag_measure_stabilizer(
+                    state, stab, *args, **kwargs)
+                measurement_bits = res.measurements.last().syndrome
+                ancilla_bits.append(measurement_bits[ancilla_qubit])
+                flag_bits.append(measurement_bits[flag_qubit])
+            rnn_syndrome_data.append(
+                    basis=pauli_type,
+                    syndrome=ancilla_bits,
+                    flags=flag_bits)
+        return rnn_syndrome_data
 
     @staticmethod
     def correct_from_flagged_circuit(state, stab, *args, **kwargs):
