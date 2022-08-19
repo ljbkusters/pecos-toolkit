@@ -168,7 +168,7 @@ class F1FTECProtocol(object):
     @staticmethod
     def flag_measure_stabilizer(state, stab, *args, **kwargs):
         circ = Measurement.F1FTECStabMeasCircuit(stab)
-        return RUNNER.run(state, circ, *args, **kwargs)
+        return circ.run(state, *args, **kwargs)
 
     @staticmethod
     def f1ftec_round(state, *args, **kwargs):
