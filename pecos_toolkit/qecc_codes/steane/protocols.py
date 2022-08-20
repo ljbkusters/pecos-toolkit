@@ -64,7 +64,7 @@ class SteaneProtocol(object):
         for stab in stabilizers:
             circ = Measurement.StabMeasCircuit(stab)
             res = RUNNER.run(state, circ, *args, **kwargs)
-            meas = res.measurements.first()
+            meas = res.measurements.first
             syndromes.append(meas.syndrome[circ.ANCILLA_QUBIT])
             faults.append(res.faults)
         syndrome = Syndrome.Syndrome(stabilizers[0].pauli_type, *syndromes)
@@ -129,7 +129,7 @@ class SteaneProtocol(object):
         circ = Measurement.DataStateMeasurement(measure_basis=measure_basis)
         decoder = Syndrome.SteaneSyndromeDecoder()
         res = RUNNER.run(state, circ, *args, **kwargs)
-        bits = res.measurements.last().syndrome
+        bits = res.measurements.last.syndrome
         top_plaq = sum([bits[i] for i in circ.top_plaquette.qubits]) % 2
         left_plaq = sum([bits[i] for i in
                          circ.bottom_left_plaquette.qubits]) % 2
@@ -163,7 +163,7 @@ class F1FTECProtocol(object):
         flag_bit = circ.FLAG_QUBIT
         while True:
             res = circ.run(*args, **kwargs)
-            flagged = bool(res.measurements.last().syndrome[flag_bit])
+            flagged = bool(res.measurements.last.syndrome[flag_bit])
             if not flagged:
                 return res
 
@@ -185,7 +185,7 @@ class F1FTECProtocol(object):
                 for stab in stabs:
                     res = F1FTECProtocol.flag_measure_stabilizer(
                         state, stab, *args, **kwargs)
-                    bit = res.measurements.last().syndrome[ancilla_qubit]
+                    bit = res.measurements.last.syndrome[ancilla_qubit]
                     syndrome[pauli_type][i].append(bit)
                     # if a flag occurs, stop and do non-FT meas + modified
                     # correction based on which circuit (stab) flagged
@@ -221,7 +221,7 @@ class F1FTECProtocol(object):
             for stab in stabs:
                 res = F1FTECProtocol.flag_measure_stabilizer(
                     state, stab, *args, **kwargs)
-                measurement_bits = res.measurements.last().syndrome
+                measurement_bits = res.measurements.last.syndrome
                 ancilla_bits.append(measurement_bits[ancilla_qubit])
                 flag_bits.append(measurement_bits[flag_qubit])
             rnn_syndrome_data.append(
@@ -269,7 +269,7 @@ class F1FTECProtocol(object):
     @staticmethod
     def is_flagged(res):
         flag_qubit = Measurement.F1FTECStabMeasCircuitData.FLAG_QUBIT
-        flag = res.measurements.last().syndrome[flag_qubit]
+        flag = res.measurements.last.syndrome[flag_qubit]
         return bool(flag)
 
 
