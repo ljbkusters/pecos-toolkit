@@ -96,8 +96,10 @@ class ImprovedRunner(pecos.circuit_runners.Standard):
                          if gate_symbol in self.MEASUREMENTS]
             if len(locations) > 0:
                 meas[tick_idx] = Measurement(num_qubits=state.num_qubits)
-                locations_meas_ones = \
-                    std_meas[tick_idx] if len(std_meas) > 0 else []
+                if tick_idx in std_meas.keys() and len(std_meas) > 0:
+                    locations_meas_ones = std_meas[tick_idx]
+                else:
+                    locations_meas_ones = []
                 for loc in locations:
                     meas[tick_idx][loc] = \
                             1 if loc in locations_meas_ones else 0
