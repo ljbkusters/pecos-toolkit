@@ -80,8 +80,9 @@ class ImprovedRunner(pecos.circuit_runners.Standard):
     """
     MEASUREMENTS = ("measure X", "measure Y", "measure Z")
 
-    def __init__(self, random_seed=True, *args, **kwargs):
-        seed = numpy.random.randint(1e9) if random_seed else None
+    def __init__(self, random_seed=True, seed=0, *args, **kwargs):
+        """random_seed takes precedense over deterministic_seed"""
+        seed = numpy.random.randint(1e9) if random_seed else seed
         super().__init__(seed=seed, *args, **kwargs)
 
     def run(self, state, circ, copy_state=False, *args, **kwargs):
