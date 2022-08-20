@@ -23,6 +23,7 @@ class MeasurementContainer(dict):
     MeasurementContainer is a basic dict with some extra functionality
     """
 
+    @property
     def ticks(self):
         """get a list of keys"""
         return list(self.keys())
@@ -35,10 +36,12 @@ class MeasurementContainer(dict):
         """Compatibility alias, the method to_list is prefered"""
         return self.to_list()
 
+    @property
     def first(self):
         """Get the first measurement"""
         return self.to_list()[0]
 
+    @property
     def last(self):
         """Get the last measurement"""
         return self.to_list()[-1]
