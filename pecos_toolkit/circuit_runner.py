@@ -61,7 +61,7 @@ class Measurement(dict):
         Returns:
             list of zeros and ones
         """
-        return [self[i] if i in self.keys() else 0
+        return [self[i] if i in self.keys() else None
                 for i in range(self.num_qubits)]
 
     def __repr__(self):
