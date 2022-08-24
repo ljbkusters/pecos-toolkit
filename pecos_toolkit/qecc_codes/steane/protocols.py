@@ -309,7 +309,15 @@ def verified_init_f1ftec_round(*args, **kwargs):
     return SteaneProtocol.decode_state(zero_state)
 
 
-def rnn_data_gen(init_parity=0, correction_steps=1, basis="Z",
+simulation_function_map = {
+        "standard_steane": steane_round,
+        "verified_f1ftec": verified_init_f1ftec_round,
+        "verified_init_only": verified_init_only,
+        "f1ftec_stab_meas_only": f1ftec_stab_meas_only,
+        }
+
+
+def rnn_data_gen(init_parity=0, syndrome_meas_steps=1, basis="Z",
                  *args, **kwargs):
     """
     Output should be:
@@ -343,10 +351,10 @@ def rnn_data_gen(init_parity=0, correction_steps=1, basis="Z",
     stab_basis = "Z" if basis == "X" else "X"
 
     data = RNNDataTypes.RNNSyndromeData()
-    for step_idx in range(correction_steps):
+    for step_idx in range(syndrome_meas_steps):
         res = F1FTECProtocol.f1ftec_rnn_data_generation(
             state, *args, **kwargs)
-        data = data.extend(res)
+        data.extend(res)
     # one more check for F1FTEC ensurance
     if data.last_flagged() or data.last_incremented():
         res = F1FTECProtocol.f1ftec_rnn_data_generation(
@@ -365,9 +373,6 @@ def rnn_data_gen(init_parity=0, correction_steps=1, basis="Z",
             )
 
 
-simulation_function_map = {
-        "standard_steane": steane_round,
-        "verified_f1ftec": verified_init_f1ftec_round,
-        "verified_init_only": verified_init_only,
-        "f1ftec_stab_meas_only": f1ftec_stab_meas_only,
+rnn_sim_f_map = {
+        "rnn_data_gen": rnn_data_gen,
         }
