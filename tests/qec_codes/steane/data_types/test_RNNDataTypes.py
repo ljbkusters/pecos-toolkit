@@ -15,15 +15,17 @@ from pecos_toolkit.qecc_codes.steane.data_types import RNNDataTypes
 class Test_BaseSyndromeData(unittest.TestCase):
 
     def setUp(self):
-        self.cls = RNNDataTypes.BaseSyndromeData()
+        self.empty_cls = RNNDataTypes.BaseSyndromeData.empty()
 
     def tearDown(self):
         pass
 
     def test_BaseSyndromeData(self):
-        self.assertIsInstance(self.cls.syndrome, list)
-        self.assertIsInstance(self.cls.syndrome_increments, list)
-        self.assertIsInstance(self.cls.flags, list)
+        self.assertIsInstance(self.empty_cls.syndrome, list)
+        self.assertIsInstance(self.empty_cls.syndrome_increments, list)
+        self.assertIsInstance(self.empty_cls.flags, list)
+        self.assertEqual(self.empty_cls.syndrome, [])
+        self.assertEqual(self.empty_cls.flags, [])
 
 
 class Test_RNNSyndromeData(unittest.TestCase):
