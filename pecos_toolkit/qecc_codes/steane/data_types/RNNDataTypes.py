@@ -11,10 +11,12 @@ import collections
 
 
 class BaseSyndromeData(collections.namedtuple(
-                       "_BaseSyndromeData",
+                       "BaseSyndromeData",
                        ("syndrome", "flags"))):
-    def __new__(cls):
-        return super().__new__(cls, [], [])
+
+    @classmethod
+    def empty(cls):
+        return cls([], [])
 
     @staticmethod
     def calc_increment(this, last):
@@ -50,7 +52,7 @@ class RNNSyndromeData(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for key in self.KEYS:
-            self[key] = BaseSyndromeData()
+            self[key] = BaseSyndromeData.empty()
 
     def __len__(self):
         lens = []
@@ -107,6 +109,19 @@ class RNNSyndromeData(dict):
     def last_incremented(self):
         return any([sum(self[key].syndrome_increments[-1]) > 0
                     for key in self.KEYS])
+
+    def pad_to(self, n_steps):
+        for key in self.KEYS:
+            length = len(self[key])
+            diff = n_steps - length
+            if diff > 0:
+                for idx in range(diff):
+                    self.append(key, [0, 0, 0], [0, 0, 0])
+            elif diff == 0:
+                pass
+            else:
+                raise RuntimeError("Number of steps greater than wanted pad"
+                                   "size, cannot pad to this value!")
 
 
 RNNData = collections.namedtuple(
