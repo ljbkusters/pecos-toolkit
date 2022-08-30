@@ -133,22 +133,11 @@ class BaseSteaneData(SteaneBinaryStabilzerGenerator):
             CORNER_RIGHT_QUBIT, EDGE_RIGHT_QUBIT,
             CENTER_QUBIT, EDGE_BOTTOM_QUBIT
             )
-    x_stabilizers = (
-            Plaquette.Stabilizer.from_plaquette(
-                top_plaquette, "X"),
-            Plaquette.Stabilizer.from_plaquette(
-                bottom_left_plaquette, "X"),
-            Plaquette.Stabilizer.from_plaquette(
-                bottom_right_plaquette, "X"),
-            )
-    z_stabilizers = (
-            Plaquette.Stabilizer.from_plaquette(
-                top_plaquette, "Z"),
-            Plaquette.Stabilizer.from_plaquette(
-                bottom_left_plaquette, "Z"),
-            Plaquette.Stabilizer.from_plaquette(
-                bottom_right_plaquette, "Z"),
-            )
+    plaquettes = (top_plaquette, bottom_left_plaquette, bottom_left_plaquette)
+    x_stabilizers = tuple(Plaquette.Stabilizer.from_plaquette(plaq, "X")
+                          for plaq in plaquettes)
+    z_stabilizers = tuple(Plaquette.Stabilizer.from_plaquette(plaq, "Z")
+                          for plaq in plaquettes)
 
 
 class BaseSteaneCirc(pecos.circuits.QuantumCircuit, BaseSteaneData):
