@@ -104,6 +104,24 @@ class RNNSyndromeData(dict):
         vector[:, 9:12] = z_flags
         return vector
 
+    def x_syndromes(self, time_step):
+        return self["X"].syndrome[time_step]
+
+    def x_syndrome_increments(self, time_step):
+        return self["X"].syndrome_increments[time_step]
+
+    def x_flags(self, time_step):
+        return self["X"].flags[time_step]
+
+    def z_syndromes(self, time_step):
+        return self["Z"].syndrome[time_step]
+
+    def z_syndrome_increments(self, time_step):
+        return self["Z"].syndrome_increments[time_step]
+
+    def z_flags(self, time_step):
+        return self["Z"].flags[time_step]
+
     def last_flagged(self):
         return any([sum(self[key].flags[-1]) > 0 for key in self.KEYS])
 
