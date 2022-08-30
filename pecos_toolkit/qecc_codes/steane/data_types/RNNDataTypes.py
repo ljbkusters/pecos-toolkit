@@ -55,11 +55,12 @@ class RNNSyndromeData(dict):
             self[key] = BaseSyndromeData.empty()
 
     def __len__(self):
-        lens = []
-        for key in self.KEYS:
-            for val in self[key]:
-                lens.append(len(val))
-                pass
+        if len(self["X"].syndrome) == len(self["Z"].syndrome):
+            return len(self["X"].syndrome)
+        else:
+            raise RuntimeError("X and Z syndrome data does not have"
+                               "equal length and no valid length could be"
+                               "determined")
 
     def append(self, basis, syndrome, flags):
         if basis not in self.KEYS:
