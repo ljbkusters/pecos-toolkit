@@ -16,6 +16,7 @@ from pecos_toolkit.qecc_codes.steane.circuits import Measurement
 from pecos_toolkit.qecc_codes.steane.circuits import Steane
 from pecos_toolkit.qecc_codes.steane.data_types import Syndrome
 from pecos_toolkit.qecc_codes.steane.data_types import RNNDataTypes
+from pecos_toolkit.qecc_codes.steane.decoders import BasicLOTDecoder
 
 
 RUNNER = ImprovedRunner(random_seed=True)
@@ -83,7 +84,7 @@ class SteaneProtocol(object):
     @staticmethod
     def correct_from_syndrome(state, syndrome: Syndrome.Syndrome,
                               *args, **kwargs):
-        decoder = Syndrome.SteaneSyndromeDecoder()
+        decoder = BasicLOTDecoder.SteaneSyndromeDecoder()
         corr_qubit, corr_pauli_type = decoder.lot_decoder(syndrome)
         if corr_qubit is not None:
             circ = Steane.SingleQubitPauli(corr_pauli_type, corr_qubit)
@@ -127,23 +128,13 @@ class SteaneProtocol(object):
             stabilizer
         """
         circ = Measurement.DataStateMeasurement(measure_basis=measure_basis)
-        decoder = Syndrome.SteaneSyndromeDecoder()
-        res = RUNNER.run(state, circ, *args, **kwargs)
+        decoder = BasicLOTDecoder.SteaneSyndromeDecoder()
+        res = circ.run(state, *args, **kwargs)
         bits = res.measurements.last.syndrome
-        top_plaq = sum([bits[i] for i in circ.top_plaquette.qubits]) % 2
-        left_plaq = sum([bits[i] for i in
-                         circ.bottom_left_plaquette.qubits]) % 2
-        right_plaq = sum([bits[i] for i in
-                          circ.bottom_right_plaquette.qubits]) % 2
-        correction = decoder.classical_lot_decoder(top_plaq,
-                                                   left_plaq,
-                                                   right_plaq)
-        if correction is not None:
-            # flip the correction bit if not None
-            bits[correction] = (bits[correction] + 1) % 2
-        logical_bit = sum([bits[i] for i in (0, 1, 4)]) % 2
+        classical_syndrome = decoder.classical_stabilizer_syndrome(bits)
+        logical_bit = decoder.corrected_classical_logical_parity(bits)
         # TODO more robust logical def. here ^^^^^^^
-        return logical_bit, [top_plaq, left_plaq, right_plaq]
+        return logical_bit, classical_syndrome
 
     def decode_state(*args, **kwargs):
         """wrapper for decode_state_base where only logical bit is returned"""
@@ -235,8 +226,8 @@ class F1FTECProtocol(object):
         """Correct a flagged stabilizer circuit.
 
         """
-        modified_decoder = Syndrome.FlaggedSyndromeDecoder(stab)
-        normal_decoder = Syndrome.SteaneSyndromeDecoder()
+        modified_decoder = BasicLOTDecoder.FlaggedSyndromeDecoder(stab)
+        normal_decoder = BasicLOTDecoder.SteaneSyndromeDecoder()
         circ = Steane.BaseSteaneCirc()
         for stabs in (Steane.BaseSteaneData.x_stabilizers,
                       Steane.BaseSteaneData.z_stabilizers):
@@ -360,10 +351,10 @@ def rnn_data_gen(init_parity=0, syndrome_meas_steps=1, basis="Z",
         res = F1FTECProtocol.f1ftec_rnn_data_generation(
             state, *args, **kwargs)
         data.extend(res)
-    logical_parity, classical_stab_parities = \
+    logical_parity, classical_stab_syndrome = \
         SteaneProtocol.decode_state_base(state, measure_basis=basis)
     final_increment = RNNDataTypes.BaseSyndromeData.calc_increment(
-            data[stab_basis].syndrome[-1], classical_stab_parities)
+            data[stab_basis].syndrome[-1], classical_stab_syndrome[1:])
     return RNNDataTypes.RNNData(
             stabilizer_data=data,
             final_syndrome_increment=final_increment,
