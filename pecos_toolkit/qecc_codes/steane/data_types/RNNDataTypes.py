@@ -9,6 +9,8 @@ RNNDataTypes.py
 import numpy
 import collections
 
+from pecos_toolkit.general import deprecation
+
 
 class BaseSyndromeData(collections.namedtuple(
                        "BaseSyndromeData",
@@ -84,7 +86,7 @@ class RNNSyndromeData(dict):
             self[s_basis].syndrome.extend(other[o_basis].syndrome)
             self[s_basis].flags.extend(other[o_basis].flags)
 
-    def to_vector(self):
+    def to_vector(self, pad_to=None, pad_val=0):
         """Cast the datatype to a vector usable for the RNN
 
         Returns:
@@ -96,12 +98,20 @@ class RNNSyndromeData(dict):
         z_increments = self["Z"].syndrome_increments
         z_flags = self["Z"].flags
 
-        vector = numpy.empty((len(x_increments), 12), dtype=bool)
+        vector = numpy.empty((len(x_increments), 12), dtype=numpy.short)
 
         vector[:, :3] = x_increments
         vector[:, 3:6] = x_flags
         vector[:, 6:9] = z_increments
         vector[:, 9:12] = z_flags
+        if pad_to is not None:
+            # padds the data in the sequence direction
+            delta = pad_to - vector.shape[0]
+            if delta < 0:
+                raise RuntimeError("Tried to pad with value lower than"
+                                   " sequence length.")
+            vector = numpy.pad(vector, ((0, delta), (0, 0)), 'constant',
+                               constant_values=pad_val)
         return vector
 
     def x_syndromes(self, time_step):
@@ -129,13 +139,18 @@ class RNNSyndromeData(dict):
         return any([sum(self[key].syndrome_increments[-1]) > 0
                     for key in self.KEYS])
 
-    def pad_to(self, n_steps):
+    @deprecation.deprecated
+    def pad_to(self, n_steps, default=-1):
         for key in self.KEYS:
-            length = len(self[key])
+            if len(self[key].syndrome) != len(self[key].flags):
+                raise RuntimeError("syndrome and flag length have different"
+                                   " lengths")
+            length = len(self[key].syndrome)
             diff = n_steps - length
             if diff > 0:
-                for idx in range(diff):
-                    self.append(key, [0, 0, 0], [0, 0, 0])
+                for _ in range(diff):
+                    self.append(key, [default, default, default],
+                                     [default, default, default])
             elif diff == 0:
                 pass
             else:

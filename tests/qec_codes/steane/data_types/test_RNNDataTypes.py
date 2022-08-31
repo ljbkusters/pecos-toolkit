@@ -42,7 +42,16 @@ class Test_RNNSyndromeData(unittest.TestCase):
 
     def setUp(self):
         """code hook to run before EACH tests"""
-        pass
+        cls = RNNDataTypes.RNNSyndromeData()
+        for key in cls.KEYS:
+            self.assertIsInstance(cls[key], RNNDataTypes.BaseSyndromeData)
+        N = 10
+        for i in range(N):
+            for basis in cls.KEYS:
+                syndrome = numpy.random.randint(0, 1, 3, dtype=int)
+                flags = numpy.random.randint(0, 1, 3, dtype=int)
+                cls.append(basis=basis, syndrome=syndrome, flags=flags)
+        self.cls = cls
 
     def tearDown(self):
         """code hook to run after EACH tests"""
@@ -160,6 +169,16 @@ class Test_RNNSyndromeData(unittest.TestCase):
                  ]
                 )
         self.assertTrue((wanted_vector == vector).all())
+
+    def test_RNNSyndromeData_pad_to(self):
+        self.cls.pad_to(50)
+        self.assertEqual(len(self.cls["X"].syndrome), 50)
+        with self.assertRaises(RuntimeError):
+            self.cls.pad_to(40)
+
+        with self.assertRaises(RuntimeError):
+            self.cls["X"].syndrome.pop()  # desync the syndrome and flag
+            self.cls.pad_to(51)
 
 
 if __name__ == "__main__":
