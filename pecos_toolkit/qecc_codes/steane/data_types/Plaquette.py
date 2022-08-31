@@ -50,7 +50,8 @@ class Stabilizer(Plaquette):
         return cls(pauli_type, *plaquette.qubits)
 
     def __repr__(self):
-        return f"{self.pauli_type} Stabilizer on qubits {self.qubits}"
+        return (f"Stabilizer(pauli_type={self.pauli_type},"
+                f" qubits={self.qubits})")
 
 
 class XStabilizer(Stabilizer):
