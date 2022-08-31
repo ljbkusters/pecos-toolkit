@@ -116,3 +116,18 @@ class SequentialLOTDecoder(object):
         logical_weight_dict = {key: self.correction_logical_weight(val)
                                for key, val in corrections_dict.items()}
         return logical_weight_dict
+
+    def decode_sequence_to_parity(self, sequence_data, input_parity,
+                                  basis=None):
+        compiled_corrections = self.decode_sequence(sequence_data)
+        correction_parities = self.corrections_dict_logical_weight(
+                compiled_corrections)
+        expected_logical_parities = {key: (input_parity + val) % 2
+                                     for key, val
+                                     in correction_parities.items(0)}
+        if basis is None:
+            return expected_logical_parities
+        elif basis in ("X", "Z"):
+            return expected_logical_parities[basis]
+        else:
+            raise ValueError("Basis should be one of (None, 'X', 'Z')")
