@@ -9,11 +9,11 @@ Syndrome.py
 import collections
 import numpy
 
-from pecos_toolkit.qecc_codes.steane.circuits import Steane
-from pecos_toolkit.qecc_codes.steane.data_types import RNNDataTypes
-from pecos_toolkit.qecc_codes.steane.data_types import Syndrome
-from pecos_toolkit.qecc_codes.steane.data_types import Plaquette
-from pecos_toolkit.qecc_codes.steane.decoders import BasicLOTDecoder
+from pecos_toolkit.qec_codes.steane.circuits import Steane
+from pecos_toolkit.qec_codes.steane.data_types import RNNDataTypes
+from pecos_toolkit.qec_codes.steane.data_types import Syndrome
+from pecos_toolkit.qec_codes.steane.data_types import Plaquette
+from pecos_toolkit.qec_codes.steane.decoders import BasicLOTDecoder
 
 
 class SequentialLOTDecoder(object):

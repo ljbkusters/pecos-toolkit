@@ -11,12 +11,12 @@ import collections
 
 # from toolkits.error_generator_toolkit import ErrorGenerator
 from pecos_toolkit.circuit_runner import ImprovedRunner
-from pecos_toolkit.qecc_codes.steane.circuits import Logical
-from pecos_toolkit.qecc_codes.steane.circuits import Measurement
-from pecos_toolkit.qecc_codes.steane.circuits import Steane
-from pecos_toolkit.qecc_codes.steane.data_types import Syndrome
-from pecos_toolkit.qecc_codes.steane.data_types import RNNDataTypes
-from pecos_toolkit.qecc_codes.steane.decoders import BasicLOTDecoder
+from pecos_toolkit.qec_codes.steane.circuits import Logical
+from pecos_toolkit.qec_codes.steane.circuits import Measurement
+from pecos_toolkit.qec_codes.steane.circuits import Steane
+from pecos_toolkit.qec_codes.steane.data_types import Syndrome
+from pecos_toolkit.qec_codes.steane.data_types import RNNDataTypes
+from pecos_toolkit.qec_codes.steane.decoders import BasicLOTDecoder
 
 
 RUNNER = ImprovedRunner(random_seed=True)

@@ -8,7 +8,7 @@ Syndrome.py
 
 import collections
 
-from pecos_toolkit.qecc_codes.steane.circuits.Steane import BaseSteaneData
+from pecos_toolkit.qec_codes.steane.circuits.Steane import BaseSteaneData
 
 Syndrome = collections.namedtuple("Syndrome", "syndrome_type top left right")
 XZSyndrome = collections.namedtuple("XZSyndrome", "x_syndrome z_syndrome")

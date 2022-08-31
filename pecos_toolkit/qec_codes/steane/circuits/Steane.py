@@ -12,7 +12,7 @@ import itertools
 import pecos.circuits
 import pecos.simulators
 
-from pecos_toolkit.qecc_codes.steane.data_types import Plaquette
+from pecos_toolkit.qec_codes.steane.data_types import Plaquette
 from pecos_toolkit import circuit_runner
 
 
