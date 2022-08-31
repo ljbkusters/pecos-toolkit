@@ -8,6 +8,8 @@ Syndrome.py
 
 import collections
 
+from pecos_toolkit.qecc_codes.steane.circuits.Steane import BaseSteaneData
+
 Syndrome = collections.namedtuple("Syndrome", "syndrome_type top left right")
 XZSyndrome = collections.namedtuple("XZSyndrome", "x_syndrome z_syndrome")
 XZSyndrome = collections.namedtuple("XZSyndrome", "x_syndrome z_syndrome")
@@ -56,6 +58,32 @@ class SteaneSyndromeDecoder(object):
     def cor_qubit(self, syndrome: Syndrome):
         lot_key = self.syndrome_to_lot_key(syndrome)
         return self.LOT[lot_key]
+
+    def classical_stabilizer_syndrome(self, bits):
+        classical_stab_parities = []
+        for stab in BaseSteaneData.x_stabilizers:
+            classical_stab_parities.append(
+                    stab.classical_stabilizer_parity(bits)
+                    )
+        return Syndrome("classical", *classical_stab_parities)
+
+    def classical_correction(self, bits, classical_syndrome: Syndrome):
+        lot_key = self.syndrome_to_lot_key(classical_syndrome)
+        correction = self.LOT[lot_key]
+        if correction is not None:
+            bits[correction] = int(not bits[correction])
+        return bits
+
+    def classical_logical_parity(self, bits):
+        # TODO more rigorous definition of logical vvv <- here
+        logical_parity = sum([bits[i] for i in (0, 1, 4)]) % 2
+        return logical_parity
+
+    def corrected_classical_logical_parity(self, bits):
+        classical_syndrome = self.classical_stabilizer_syndrome(bits)
+        corrected_bits = self.classical_correction(bits, classical_syndrome)
+        logical_parity = self.classical_logical_parity(corrected_bits)
+        return logical_parity
 
     def classical_lot_decoder(self, top, left, right):
         lot_key = self.bits_to_lot_key(top, left, right)
