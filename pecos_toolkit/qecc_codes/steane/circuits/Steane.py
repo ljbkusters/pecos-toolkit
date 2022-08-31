@@ -133,7 +133,7 @@ class BaseSteaneData(SteaneBinaryStabilzerGenerator):
             CORNER_RIGHT_QUBIT, EDGE_RIGHT_QUBIT,
             CENTER_QUBIT, EDGE_BOTTOM_QUBIT
             )
-    plaquettes = (top_plaquette, bottom_left_plaquette, bottom_left_plaquette)
+    plaquettes = (top_plaquette, bottom_left_plaquette, bottom_right_plaquette)
     x_stabilizers = tuple(Plaquette.Stabilizer.from_plaquette(plaq, "X")
                           for plaq in plaquettes)
     z_stabilizers = tuple(Plaquette.Stabilizer.from_plaquette(plaq, "Z")
