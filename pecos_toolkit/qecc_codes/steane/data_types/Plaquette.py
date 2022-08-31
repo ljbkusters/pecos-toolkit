@@ -53,6 +53,18 @@ class Stabilizer(Plaquette):
         return (f"Stabilizer(pauli_type={self.pauli_type},"
                 f" qubits={self.qubits})")
 
+    def classical_stabilizer_parity(self, classical_bits):
+        """stabilizer parity from classical bit string representing
+        all 7 data qubits
+
+        Arguments:
+            classical_bits: classical 7 bit iterable
+
+        Returns:
+            Classical stabilizer parity for this stabilizer
+        """
+        return sum([classical_bits[i] for i in self.qubits]) % 2
+
 
 class XStabilizer(Stabilizer):
     def __init__(self, *args, **kwargs):
