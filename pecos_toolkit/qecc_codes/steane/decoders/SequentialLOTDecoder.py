@@ -107,5 +107,12 @@ class SequentialLOTDecoder(object):
                 (1 if i in qubits else 0
                  for i in self.CODE_DATA.DATA_QUBITS), dtype=bool)
 
-    def correction_logical_weight(self, corrections):
-        pass
+    def correction_logical_weight(self, correction):
+        """Wrapper around basic_lot_dict.corrected_classical_logical_parity"""
+        return self.basic_lot_decoder.corrected_classical_logical_parity(
+                correction)
+
+    def corrections_dict_logical_weight(self, corrections_dict):
+        logical_weight_dict = {key: self.correction_logical_weight(val)
+                               for key, val in corrections_dict.items()}
+        return logical_weight_dict
