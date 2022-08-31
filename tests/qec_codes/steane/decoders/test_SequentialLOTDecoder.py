@@ -122,7 +122,11 @@ class TestSequentialLOTDecoder(unittest.TestCase):
                 z == self.sample_sequence_corrections[i][1]))
 
     def test_decode_sequence(self):
-        print(self.decoder.decode_sequence(self.sample_sequence))
+        corrections = self.decoder.decode_sequence(self.sample_sequence)
+        print(corrections)
+        lw = self.decoder.corrections_dict_logical_weight(corrections)
+        print(lw)
+
 
 
 if __name__ == "__main__":
