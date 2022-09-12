@@ -24,11 +24,13 @@ class SequentialLOTDecoder(object):
         self.basic_lot_decoder = BasicLOTDecoder.SteaneSyndromeDecoder()
 
     def decode_sequence(self, sequence_data):
+        # remove -1 mask
+        sequence_data = sequence_data[(sequence_data >= 0).all(axis=1)]
+
         seq_data_len = len(sequence_data)
         num_data_qubits = len(self.CODE_DATA.DATA_QUBITS)
         corrections = numpy.zeros((seq_data_len, 2, num_data_qubits),
                                   dtype=bool)
-        print(corrections)
         for time_step in range(seq_data_len):
             correction = self.correction_per_time_step(sequence_data,
                                                        time_step)
@@ -124,7 +126,7 @@ class SequentialLOTDecoder(object):
                 compiled_corrections)
         expected_logical_parities = {key: (input_parity + val) % 2
                                      for key, val
-                                     in correction_parities.items(0)}
+                                     in correction_parities.items()}
         if basis is None:
             return expected_logical_parities
         elif basis in ("X", "Z"):
