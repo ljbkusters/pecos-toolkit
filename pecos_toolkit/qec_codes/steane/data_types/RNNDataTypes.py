@@ -86,7 +86,7 @@ class RNNSyndromeData(dict):
             self[s_basis].syndrome.extend(other[o_basis].syndrome)
             self[s_basis].flags.extend(other[o_basis].flags)
 
-    def to_vector(self, pad_to=None, pad_val=0):
+    def to_vector(self, pad_to=None, pad_val=0, dtype=bool):
         """Cast the datatype to a vector usable for the RNN
 
         Returns:
@@ -98,7 +98,7 @@ class RNNSyndromeData(dict):
         z_increments = self["Z"].syndrome_increments
         z_flags = self["Z"].flags
 
-        vector = numpy.empty((len(x_increments), 12), dtype=numpy.short)
+        vector = numpy.empty((len(x_increments), 12), dtype=dtype)
 
         vector[:, :3] = x_increments
         vector[:, 3:6] = x_flags
