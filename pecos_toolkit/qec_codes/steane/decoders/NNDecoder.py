@@ -28,13 +28,14 @@ class RegularIntervalModelSaver(keras.callbacks.Callback):
 class _BaseNeuralNetworkDecoder(
         AbstractSequentialDecoder.AbstractSequentialDecoder):
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.model = keras.models.Sequential()
 
     @classmethod
     def from_path(cls, path, *args, **kwargs):
-        instance = cls()
-        instance.model = instance.load(path, *args, **kwargs)
+        instance = cls(*args, **kwargs)
+        instance.load(path)
         return instance
 
     def decode_sequence_to_parity(self, sequence_data, parity_threshold=0.5):
@@ -92,6 +93,11 @@ class _BaseNeuralNetworkDecoder(
     def load(self, *args, **kwargs):
         """Wrapper for keras.models.load_model"""
         self.model = keras.models.load_model(*args, **kwargs)
+
+    def compile(self, *args, **kwargs):
+        """Wrapper for self.models.compile"""
+        self.model.compile(*args, **kwargs)
+
 
 class categorical_accuracy_no_mask(keras.callbacks.Callback):
 
