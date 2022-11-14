@@ -309,6 +309,7 @@ simulation_function_map = {
 
 
 def rnn_data_gen(init_parity=0, syndrome_meas_steps=1, basis="Z",
+                 ideal_encoding=True, ideal_decoding=True,
                  *args, **kwargs):
     """
     Output should be:
@@ -329,13 +330,19 @@ def rnn_data_gen(init_parity=0, syndrome_meas_steps=1, basis="Z",
         raise ValueError(f"kwarg init_parity (val: {basis}) must be one"
                          f" of {ALLOWED_BASIS}")
 
-    state = F1FTECProtocol.verified_init_logical_zero(*args, **kwargs).state
-
-    if init_parity == 1:
-        Logical.LogicalPauli("X").run(state, *args, **kwargs)
-
-    if basis == "X":
-        Logical.TransverseSingleQubitGate("H").run(state, *args, **kwargs)
+    if ideal_encoding:
+        state = F1FTECProtocol.verified_init_logical_zero().state
+        if init_parity == 1:
+            Logical.LogicalPauli("X").run(state)
+        if basis == "X":
+            Logical.TransverseSingleQubitGate("H").run(state)
+    else:
+        state = F1FTECProtocol.verified_init_logical_zero(
+                *args, **kwargs).state
+        if init_parity == 1:
+            Logical.LogicalPauli("X").run(state, *args, **kwargs)
+        if basis == "X":
+            Logical.TransverseSingleQubitGate("H").run(state, *args, **kwargs)
 
     # which stabilizers to read given the input basis
     # (each basis requires its own decoder)
@@ -351,8 +358,13 @@ def rnn_data_gen(init_parity=0, syndrome_meas_steps=1, basis="Z",
         res = F1FTECProtocol.f1ftec_rnn_data_generation(
             state, *args, **kwargs)
         data.extend(res)
-    logical_parity, classical_stab_syndrome = \
-        SteaneProtocol.decode_state_base(state, measure_basis=basis)
+    if ideal_decoding:
+        logical_parity, classical_stab_syndrome = \
+            SteaneProtocol.decode_state_base(state, measure_basis=basis)
+    else:
+        logical_parity, classical_stab_syndrome = \
+            SteaneProtocol.decode_state_base(state, measure_basis=basis,
+                                             *args, **kwargs)
     final_increment = RNNDataTypes.BaseSyndromeData.calc_increment(
             data[stab_basis].syndrome[-1], classical_stab_syndrome[1:])
     return RNNDataTypes.RNNData(
