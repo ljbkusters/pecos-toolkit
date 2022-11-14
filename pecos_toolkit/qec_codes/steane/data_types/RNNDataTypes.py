@@ -38,6 +38,10 @@ class BaseSyndromeData(collections.namedtuple(
 class RNNSyndromeData(dict):
 
     KEYS = ("X", "Z")
+    X_INC_RANGE = range(0, 3)
+    X_FLAG_RANGE = range(3, 6)
+    Z_INC_RANGE = range(6, 9)
+    Z_FLAG_RANGE = range(9, 12)
 
     class NonAllowedValueError(ValueError):
         def __init__(self, arg, val, allowed_vals):
