@@ -6,7 +6,9 @@ NNDecoder.py
 @date 26-09-2022
 """
 
+import datetime
 import numpy
+import os
 from tensorflow import keras
 
 from pecos_toolkit.qec_codes.steane.decoders import AbstractSequentialDecoder
@@ -130,11 +132,22 @@ class DualLSTMDecoder(_BaseNeuralNetworkDecoder):
     Uses keras standard interface to learn, save and load a model
     """
 
-    def __init__(self, input_shape, *args, **kwargs):
+    def __init__(self, checkpoint_filepath=None, *args, **kwargs):
+        if checkpoint_filepath is None:
+            if not os.path.exists("models"):
+                os.mkdir("models")
+            self.checkpoint_filepath = os.path.join(
+                "models",
+                f"model_{type(self).__name__}_{datetime.datetime.now()}"
+                )
+            print(f"Saving checkpoints to {self.checkpoint_filepath}...")
         super().__init__(*args, **kwargs)
+
+    def define_model(self, input_shape):
         self.input_shape = input_shape
         self.loss_function = keras.losses.BinaryCrossentropy()
-        self.optimizer = keras.optimizers.Adam(lr=1e-3)  # , decay=1e-5)
+        self.optimizer = keras.optimizers.Adam(learning_rate=1e-3)
+        # decay=1e-5)
 
         # LSTM Layer + masking
         self.model.add(keras.layers.Masking(
@@ -159,6 +172,22 @@ class DualLSTMDecoder(_BaseNeuralNetworkDecoder):
         # binary output from 0 to 1
         self.model.add(keras.layers.Dense(units=1, activation="sigmoid"))
 
+        # checkpoint callback
+        self.callbacks = []
+        self.callbacks.append(keras.callbacks.ModelCheckpoint(
+                filepath=self.checkpoint_filepath,
+                monitor="val_loss",
+                verbose=0,
+                save_best_only=True,
+                save_weights_only=False,
+                mode="auto",
+                save_freq="epoch",
+                options=None,
+                initial_value_threshold=None,
+                ))
+
+    def compile(self, *args, **kwargs):
+        self.define_model(*args, **kwargs)
         self.model.compile(loss=self.loss_function, optimizer=self.optimizer,
                            metrics=['accuracy'])
 
@@ -213,3 +242,137 @@ class XZDecoder(_BaseNeuralNetworkDecoder):
         p = keras.backend.cast(y_true * mask, keras.backend.floatx())
         q = y_pred * mask
         return keras.backend.binary_crossentropy(p, q)
+
+
+class DNNDecoder(_BaseNeuralNetworkDecoder):
+    """Deep neural network (DNN) decoder, can decode either Z or X errors
+
+    The DNN Decoder requires fixed input size data.
+
+    Defines a tensorflow.keras model with a number of dense layers.
+
+    Uses keras standard interface to learn, save and load a model
+    """
+
+    def __init__(self, checkpoint_filepath=None, *args, **kwargs):
+        if checkpoint_filepath is None:
+            if not os.path.exists("models"):
+                os.mkdir("models")
+            self.checkpoint_filepath = os.path.join(
+                "models",
+                f"model_{type(self).__name__}_{datetime.datetime.now()}"
+                )
+            print(f"Saving checkpoints to {self.checkpoint_filepath}...")
+        super().__init__(*args, **kwargs)
+
+    def define_model(self, input_shape,
+                     base_neuron_scale=12,
+                     large_block_rscale=4,
+                     mid_block_rscale=2,
+                     small_block_rscale=1,
+                     repeats=1,
+                     n_large_blocks=1,
+                     n_mid_blocks=1,
+                     n_small_blocks=1,
+                     learning_rate=1e-4, decay=None,
+                     with_dropout=True,
+                     dropout_p=0.2,
+                     amsgrad=True,
+                     save_best_only=True,
+                     save_regular_interval=True,
+                     save_interval=1,
+                     use_regularizer=True,
+                     ):
+        self.input_shape = input_shape
+        self.loss_function = keras.losses.BinaryCrossentropy()
+        if decay is None:
+            decay = learning_rate
+        self.optimizer = keras.optimizers.Adam(learning_rate=learning_rate,
+                                               decay=decay,
+                                               amsgrad=amsgrad)
+        # decay=1e-5)
+
+        # post_processing
+        self.model.add(keras.layers.InputLayer(input_shape=self.input_shape))
+        # large block (from input)
+        # large
+        self.add_n_blocks(units=base_neuron_scale*large_block_rscale,
+                          repeats=repeats*n_large_blocks,
+                          with_dropout=with_dropout,
+                          dropout_p=dropout_p,
+                          )
+        # mid
+        self.add_n_blocks(units=base_neuron_scale*mid_block_rscale,
+                          repeats=repeats*n_mid_blocks,
+                          with_dropout=with_dropout,
+                          dropout_p=dropout_p,
+                          )
+        # small
+        self.add_n_blocks(units=base_neuron_scale*small_block_rscale,
+                          repeats=repeats*n_small_blocks,
+                          with_dropout=with_dropout,
+                          dropout_p=dropout_p,
+                          )
+        # binary output from 0 to 1
+        self.model.add(keras.layers.Dense(units=1, activation="sigmoid"))
+
+        # checkpoint callback
+        self.callbacks = []
+        self.callbacks.append(keras.callbacks.ModelCheckpoint(
+                filepath=f"{self.checkpoint_filepath}_cpt",
+                monitor="val_accuracy",
+                verbose=0,
+                save_best_only=save_best_only,
+                save_weights_only=False,
+                mode="auto",
+                save_freq="epoch",
+                options=None,
+                initial_value_threshold=None,
+                ))
+        if save_regular_interval:
+            self.callbacks.append(RegularIntervalModelSaver(
+                self.checkpoint_filepath, epoch_interval=save_interval))
+        print(self.callbacks)
+
+    def add_n_blocks(self, units, repeats,
+                     with_dropout, dropout_p,
+                     activation="relu"):
+        if units == 0:
+            return
+        for _ in range(repeats):
+            self.model.add(keras.layers.Dense(
+                units=units,
+                activation=activation,
+                #kernel_regularizer="l1",
+                #bias_regularizer="l1",
+                ))
+            if with_dropout:
+                self.model.add(keras.layers.Dropout(dropout_p))
+
+    def compile(self, *args, **kwargs):
+        self.define_model(*args, **kwargs)
+        self.model.compile(loss=self.loss_function, optimizer=self.optimizer,
+                           metrics=['accuracy'])
+
+    def decode_sequence_to_parity(self, sequence_data, parity_threshold=0.5):
+        """Calculate expected error parity for the model
+
+        Arguments:
+            sequence_data, numpy.ndarray containing sequence data used
+                for decoding. Can be a numpy array of shape (?,s,12)
+                or (s,12).
+            parity_threshold: threshold to determine when a bit flip
+                occurs. The keras model returns probabilities from 0 to
+                1 for whether a bit flip occured. The standard
+                threshold is 0.5 (which comes down to mathematical
+                rounding)
+
+        Returns:
+            numpy.ndarray of bools. True means the network predicted that
+            an error occured, False means that the network predicted that
+            no error occured.
+        """
+        sequence_data = sequence_data.flatten()[numpy.newaxis]
+        predictions = self.model.predict(sequence_data)
+        parities = predictions >= parity_threshold
+        return parities
