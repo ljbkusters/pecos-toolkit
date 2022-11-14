@@ -12,6 +12,19 @@ from tensorflow import keras
 from pecos_toolkit.qec_codes.steane.decoders import AbstractSequentialDecoder
 
 
+class RegularIntervalModelSaver(keras.callbacks.Callback):
+
+    def __init__(self, model_name, *args, epoch_interval=1, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.model_name = model_name
+        self.epoch_interval = epoch_interval
+
+    def on_epoch_end(self, epoch, logs={}):
+        if epoch % self.epoch_interval == 0:
+            print("saving...")
+            self.model.save(f"{self.model_name}_epoch_{epoch}")
+
+
 class _BaseNeuralNetworkDecoder(
         AbstractSequentialDecoder.AbstractSequentialDecoder):
 
