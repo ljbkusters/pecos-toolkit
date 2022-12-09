@@ -265,9 +265,13 @@ class F1FTECProtocol(object):
 
 
 # SIMULATION FUNCTIONS
+EXCLUDED_ANCILLA_QUDITS = (set(Steane.BaseSteaneCirc.qudits)
+                           - set(Steane.BaseSteaneCirc.DATA_QUDITS))
 
 
-def steane_round(*args, **kwargs):
+def steane_round(data_qudit_noise_only=False, *args, **kwargs):
+    if data_qudit_noise_only:
+        kwargs["excluded_qudits"] = EXCLUDED_ANCILLA_QUDITS
     zero_state = SteaneProtocol.init_logical_zero(*args, **kwargs).state
     SteaneProtocol.idle_data_qubits(zero_state, *args, **kwargs)
     SteaneProtocol.full_steane_round(zero_state, *args, **kwargs)
@@ -275,14 +279,18 @@ def steane_round(*args, **kwargs):
     return SteaneProtocol.decode_state(zero_state)
 
 
-def verified_init_only(*args, **kwargs):
+def verified_init_only(data_qudit_noise_only=False, *args, **kwargs):
+    if data_qudit_noise_only:
+        kwargs["excluded_qudits"] = EXCLUDED_ANCILLA_QUDITS
     zero_state = \
-            F1FTECProtocol.verified_init_logical_zero(*args, **kwargs).state
+        F1FTECProtocol.verified_init_logical_zero(*args, **kwargs).state
     # perfect decoding makes sure the final result is the true state
     return SteaneProtocol.decode_state(zero_state)
 
 
-def f1ftec_stab_meas_only(*args, **kwargs):
+def f1ftec_stab_meas_only(data_qudit_noise_only=False, *args, **kwargs):
+    if data_qudit_noise_only:
+        kwargs["excluded_qudits"] = EXCLUDED_ANCILLA_QUDITS
     # init using steane round
     physical_zero_state = (SteaneProtocol.init_physical_zero(*args, **kwargs)
                            .state)
@@ -292,7 +300,9 @@ def f1ftec_stab_meas_only(*args, **kwargs):
     return SteaneProtocol.decode_state(zero_state)
 
 
-def verified_init_f1ftec_round(*args, **kwargs):
+def verified_init_f1ftec_round(data_qudit_noise_only=False, *args, **kwargs):
+    if data_qudit_noise_only:
+        kwargs["excluded_qudits"] = EXCLUDED_ANCILLA_QUDITS
     zero_state = (F1FTECProtocol.verified_init_logical_zero(*args, **kwargs)
                   .state)
     F1FTECProtocol.f1ftec_round(zero_state, *args, **kwargs)
@@ -310,6 +320,7 @@ simulation_function_map = {
 
 def rnn_data_gen(init_parity=0, syndrome_meas_steps=1, basis="Z",
                  ideal_encoding=True, ideal_decoding=True,
+                 data_qudit_noise_only=False,
                  *args, **kwargs):
     """
     Output should be:
@@ -320,6 +331,8 @@ def rnn_data_gen(init_parity=0, syndrome_meas_steps=1, basis="Z",
         vector of dim 3 with final increments (depending on measurement basis)
         one bit with the true final parity
     """
+    if data_qudit_noise_only:
+        kwargs["excluded_qudits"] = EXCLUDED_ANCILLA_QUDITS
 
     ALLOWED_INIT_PARITY = (0, 1)
     if init_parity not in ALLOWED_INIT_PARITY:
