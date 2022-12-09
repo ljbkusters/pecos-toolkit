@@ -139,6 +139,7 @@ class GeneralErrorGen(__BaseErrorGen):
                 have errors.
         """
         self.epgc_list = epgc_list
+        self.excluded_qudits = None
         self.configure_generator_from_epgc_list(self.epgc_list)
 
     def reconfigure(self):
@@ -216,8 +217,27 @@ class GeneralErrorGen(__BaseErrorGen):
         else:
             return self.gen.ErrorSet(epgc.error_gates, after=after)
 
+    def filter_excluded(self, locations, excluded):
+        filtered_locations = set()
+        for loc in locations:
+            if isinstance(loc, tuple):
+                # filter multi qudit locations
+                if not any(sub_loc in excluded for sub_loc in loc):
+                    filtered_locations.add(loc)
+            elif isinstance(loc, int):
+                # filter single qudit locations
+                if loc not in excluded:
+                    filtered_locations.add(loc)
+            else:
+                raise NotImplementedError("filter excluded cannot handle"
+                                          f"location of type {type(loc)}")
+        return filtered_locations
+
     def generate_tick_errors(self, tick_circuit, time, **params):
         """Assign errors to a circuit as configured during initialization"""
+        if "excluded_qudits" in params.keys():
+            self.excluded_qudits = params["excluded_qudits"]
+
         before = pecos.circuits.QuantumCircuit()
         after = pecos.circuits.QuantumCircuit()
         replace = set([])
@@ -227,12 +247,21 @@ class GeneralErrorGen(__BaseErrorGen):
             tick_index = time
         circuit = tick_circuit.circuit
         for symbol, gate_locations, _ in circuit.items(tick=tick_index):
+            if self.excluded_qudits is not None:
+                gate_locations = self.filter_excluded(gate_locations,
+                                                      self.excluded_qudits)
+            print(gate_locations)
             self.gen.create_errors(self, symbol, gate_locations, after,
                                    before, replace)
 
         # add idle errors
         idle_qudits = circuit.qudits - circuit.active_qudits[tick_index]
-        self.gen.create_errors(self, 'idle', idle_qudits, after,
+        if self.excluded_qudits is not None:
+            gate_locations = self.filter_excluded(idle_qudits,
+                                                  self.excluded_qudits)
+        else:
+            gate_locations = idle_qudits
+        self.gen.create_errors(self, 'idle', gate_locations, after,
                                before, replace)
 
         # add faults to circuit
