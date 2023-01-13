@@ -31,13 +31,14 @@ class _BaseNeuralNetworkDecoder(
         AbstractSequentialDecoder.AbstractSequentialDecoder):
 
     def __init__(self, *args, **kwargs):
+        print(args, kwargs)
         super().__init__(*args, **kwargs)
         self.model = keras.models.Sequential()
 
     @classmethod
-    def from_path(cls, path, *args, **kwargs):
+    def from_path(cls, path, custom_objects=None, *args, **kwargs):
         instance = cls(*args, **kwargs)
-        instance.load(path)
+        instance.load(path, custom_objects)
         return instance
 
     def decode_sequence_to_parity(self, sequence_data, parity_threshold=0.5):
@@ -151,7 +152,7 @@ class DualLSTMDecoder(_BaseNeuralNetworkDecoder):
 
         # LSTM Layer + masking
         self.model.add(keras.layers.Masking(
-              mask_value=-1, input_shape=input_shape))
+              mask_value=self.mask_value, input_shape=input_shape))
         self.model.add(keras.layers.LSTM(units=36,
                                          input_shape=self.input_shape,
                                          activation="relu",
@@ -192,7 +193,7 @@ class DualLSTMDecoder(_BaseNeuralNetworkDecoder):
                            metrics=['accuracy'])
 
 
-class XZDecoder(_BaseNeuralNetworkDecoder):
+class DualLSTMDecoderXZ(_BaseNeuralNetworkDecoder):
     """LSTM decoder, can decode both X and Z errors from sequence data
 
     Defines a tensorflow.keras model with a number of LSTM layers followed by
@@ -203,18 +204,20 @@ class XZDecoder(_BaseNeuralNetworkDecoder):
     Uses keras standard interface to learn, save and load a model
     """
 
-    def __init__(self, input_shape, mask_value=-1, *args, **kwargs):
-        self.mask_value = mask_value
+    def __init__(self, input_shape=(21, 12), x_mask_value=-1,
+                 y_mask_value=-1, *args, **kwargs):
+        self.x_mask_value = x_mask_value
+        self.y_mask_value = y_mask_value
 
         super().__init__(*args, **kwargs)
 
         self.input_shape = input_shape
         self.loss_function = self.masked_bce
-        self.optimizer = keras.optimizers.Adam(lr=1e-3)
+        self.optimizer = keras.optimizers.Adam(learning_rate=1e-3)
 
         # LSTM Layer + masking
         self.model.add(keras.layers.Masking(
-              mask_value=-1, input_shape=input_shape))
+              mask_value=self.x_mask_value, input_shape=input_shape))
         self.model.add(keras.layers.LSTM(units=36,
                                          input_shape=self.input_shape,
                                          activation="relu",
@@ -237,8 +240,15 @@ class XZDecoder(_BaseNeuralNetworkDecoder):
 
         self.model.compile(loss=self.loss_function, optimizer=self.optimizer)
 
-    def masked_bce(self, y_true, y_pred):
-        mask = keras.backend.not_equal(y_true, self.mask_value),
+    @classmethod
+    def from_path(cls, path, custom_objects=None, **kwargs):
+        if custom_objects is None:
+            custom_objects = {"masked_bce": cls.masked_bce}
+        return super().from_path(path, custom_objects=custom_objects, **kwargs)
+
+    @staticmethod
+    def masked_bce(y_true, y_pred, y_mask_value=0):
+        mask = keras.backend.not_equal(y_true, y_mask_value),
         p = keras.backend.cast(y_true * mask, keras.backend.floatx())
         q = y_pred * mask
         return keras.backend.binary_crossentropy(p, q)
@@ -354,7 +364,8 @@ class DNNDecoder(_BaseNeuralNetworkDecoder):
         self.model.compile(loss=self.loss_function, optimizer=self.optimizer,
                            metrics=['accuracy'])
 
-    def decode_sequence_to_parity(self, sequence_data, parity_threshold=0.5):
+    def decode_sequence_to_parity(self, sequence_data, parity_threshold=0.5,
+                                  batch_process=False):
         """Calculate expected error parity for the model
 
         Arguments:
@@ -372,7 +383,10 @@ class DNNDecoder(_BaseNeuralNetworkDecoder):
             an error occured, False means that the network predicted that
             no error occured.
         """
-        sequence_data = sequence_data.flatten()[numpy.newaxis]
+        if not batch_process:
+            sequence_data = sequence_data.flatten()[numpy.newaxis]
+
         predictions = self.model.predict(sequence_data)
         parities = predictions >= parity_threshold
         return parities
+
