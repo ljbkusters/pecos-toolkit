@@ -127,7 +127,8 @@ class GeneralErrorGen(__BaseErrorGen):
 
     ALLOWED_EPGC_TYPES = (ErrorProneGateCollection, IdleErrorCollection)
 
-    def configure_error_generator(self, epgc_list=list()):
+    def configure_error_generator(self, epgc_list=list(),
+                                  excluded_qudits=None):
         """Configure the error generator
 
         The kwargs defined above should be passed at init time, or by
@@ -235,8 +236,7 @@ class GeneralErrorGen(__BaseErrorGen):
 
     def generate_tick_errors(self, tick_circuit, time, **params):
         """Assign errors to a circuit as configured during initialization"""
-        if "excluded_qudits" in params.keys():
-            self.excluded_qudits = params["excluded_qudits"]
+        # print(self.excluded_qudits)
 
         before = pecos.circuits.QuantumCircuit()
         after = pecos.circuits.QuantumCircuit()
@@ -250,7 +250,7 @@ class GeneralErrorGen(__BaseErrorGen):
             if self.excluded_qudits is not None:
                 gate_locations = self.filter_excluded(gate_locations,
                                                       self.excluded_qudits)
-            print(gate_locations)
+            # print(gate_locations)
             self.gen.create_errors(self, symbol, gate_locations, after,
                                    before, replace)
 
