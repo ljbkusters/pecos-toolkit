@@ -317,7 +317,7 @@ simulation_function_map = {
 
 
 def rnn_data_gen(init_parity=0, syndrome_meas_steps=1, basis="Z",
-                 ideal_encoding=True, ideal_decoding=True,
+                 ideal_encoding=False, ideal_decoding=False,
                  data_qudit_noise_only=False,
                  *args, **kwargs):
     """
