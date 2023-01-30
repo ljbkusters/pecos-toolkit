@@ -9,6 +9,7 @@ NNDecoder.py
 import datetime
 import numpy
 import os
+from functools import partial
 from tensorflow import keras
 
 from pecos_toolkit.qec_codes.steane.decoders import AbstractSequentialDecoder
@@ -41,7 +42,8 @@ class _BaseNeuralNetworkDecoder(
         instance.load(path, custom_objects)
         return instance
 
-    def decode_sequence_to_parity(self, sequence_data, parity_threshold=0.5):
+    def decode_sequence_to_parity(self, sequence_data, parity_threshold=0.5,
+                                  **kwargs):
         """Calculate expected error parity for the model
 
         Arguments:
@@ -61,8 +63,9 @@ class _BaseNeuralNetworkDecoder(
         """
         sequence_ndim = sequence_data.ndim
         if sequence_ndim == 2:
-            numpy.expand_dims(sequence_data, axis=0)
-        predictions = self.model.predict(sequence_data)
+            sequence_data = sequence_data[numpy.newaxis]
+            # numpy.expand_dims(sequence_data, axis=0)
+        predictions = self.model.predict(sequence_data, **kwargs)
         parities = predictions >= parity_threshold
         return parities
 
@@ -144,15 +147,14 @@ class DualLSTMDecoder(_BaseNeuralNetworkDecoder):
             print(f"Saving checkpoints to {self.checkpoint_filepath}...")
         super().__init__(*args, **kwargs)
 
-    def define_model(self, input_shape):
+    def define_model(self, input_shape, mask_value, learning_rate):
         self.input_shape = input_shape
         self.loss_function = keras.losses.BinaryCrossentropy()
-        self.optimizer = keras.optimizers.Adam(learning_rate=1e-3)
-        # decay=1e-5)
+        self.optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
         # LSTM Layer + masking
         self.model.add(keras.layers.Masking(
-              mask_value=self.mask_value, input_shape=input_shape))
+              mask_value=mask_value, input_shape=input_shape))
         self.model.add(keras.layers.LSTM(units=36,
                                          input_shape=self.input_shape,
                                          activation="relu",
@@ -173,20 +175,6 @@ class DualLSTMDecoder(_BaseNeuralNetworkDecoder):
         # binary output from 0 to 1
         self.model.add(keras.layers.Dense(units=1, activation="sigmoid"))
 
-        # checkpoint callback
-        self.callbacks = []
-        self.callbacks.append(keras.callbacks.ModelCheckpoint(
-                filepath=self.checkpoint_filepath,
-                monitor="val_loss",
-                verbose=0,
-                save_best_only=True,
-                save_weights_only=False,
-                mode="auto",
-                save_freq="epoch",
-                options=None,
-                initial_value_threshold=None,
-                ))
-
     def compile(self, *args, **kwargs):
         self.define_model(*args, **kwargs)
         self.model.compile(loss=self.loss_function, optimizer=self.optimizer,
@@ -205,7 +193,7 @@ class DualLSTMDecoderXZ(_BaseNeuralNetworkDecoder):
     """
 
     def __init__(self, input_shape=(21, 12), x_mask_value=-1,
-                 y_mask_value=-1, *args, **kwargs):
+                 y_mask_value=-1, learning_rate=1e-3, *args, **kwargs):
         self.x_mask_value = x_mask_value
         self.y_mask_value = y_mask_value
 
@@ -213,7 +201,7 @@ class DualLSTMDecoderXZ(_BaseNeuralNetworkDecoder):
 
         self.input_shape = input_shape
         self.loss_function = self.masked_bce
-        self.optimizer = keras.optimizers.Adam(learning_rate=1e-3)
+        self.optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
         # LSTM Layer + masking
         self.model.add(keras.layers.Masking(
@@ -247,8 +235,9 @@ class DualLSTMDecoderXZ(_BaseNeuralNetworkDecoder):
         return super().from_path(path, custom_objects=custom_objects, **kwargs)
 
     @staticmethod
-    def masked_bce(y_true, y_pred, y_mask_value=0):
+    def masked_bce(y_true, y_pred, *args, y_mask_value=-1., **kwargs):
         mask = keras.backend.not_equal(y_true, y_mask_value),
+        print(mask)
         p = keras.backend.cast(y_true * mask, keras.backend.floatx())
         q = y_pred * mask
         return keras.backend.binary_crossentropy(p, q)
@@ -264,15 +253,7 @@ class DNNDecoder(_BaseNeuralNetworkDecoder):
     Uses keras standard interface to learn, save and load a model
     """
 
-    def __init__(self, checkpoint_filepath=None, *args, **kwargs):
-        if checkpoint_filepath is None:
-            if not os.path.exists("models"):
-                os.mkdir("models")
-            self.checkpoint_filepath = os.path.join(
-                "models",
-                f"model_{type(self).__name__}_{datetime.datetime.now()}"
-                )
-            print(f"Saving checkpoints to {self.checkpoint_filepath}...")
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def define_model(self, input_shape,
@@ -339,10 +320,9 @@ class DNNDecoder(_BaseNeuralNetworkDecoder):
                 options=None,
                 initial_value_threshold=None,
                 ))
-        if save_regular_interval:
-            self.callbacks.append(RegularIntervalModelSaver(
-                self.checkpoint_filepath, epoch_interval=save_interval))
-        print(self.callbacks)
+        # if save_regular_interval:
+        #     self.callbacks.append(RegularIntervalModelSaver(
+        #         self.checkpoint_filepath, epoch_interval=save_interval))
 
     def add_n_blocks(self, units, repeats,
                      with_dropout, dropout_p,
@@ -353,8 +333,8 @@ class DNNDecoder(_BaseNeuralNetworkDecoder):
             self.model.add(keras.layers.Dense(
                 units=units,
                 activation=activation,
-                #kernel_regularizer="l1",
-                #bias_regularizer="l1",
+                # kernel_regularizer="l1",
+                # bias_regularizer="l1",
                 ))
             if with_dropout:
                 self.model.add(keras.layers.Dropout(dropout_p))
@@ -365,7 +345,7 @@ class DNNDecoder(_BaseNeuralNetworkDecoder):
                            metrics=['accuracy'])
 
     def decode_sequence_to_parity(self, sequence_data, parity_threshold=0.5,
-                                  batch_process=False):
+                                  batch_process=False, **kwargs):
         """Calculate expected error parity for the model
 
         Arguments:
@@ -386,7 +366,6 @@ class DNNDecoder(_BaseNeuralNetworkDecoder):
         if not batch_process:
             sequence_data = sequence_data.flatten()[numpy.newaxis]
 
-        predictions = self.model.predict(sequence_data)
+        predictions = self.model.predict(sequence_data, **kwargs)
         parities = predictions >= parity_threshold
         return parities
-
