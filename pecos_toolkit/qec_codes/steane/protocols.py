@@ -9,6 +9,8 @@ steane.py
 import numpy
 import collections
 
+import time
+
 # from toolkits.error_generator_toolkit import ErrorGenerator
 from pecos_toolkit.circuit_runner import ImprovedRunner
 from pecos_toolkit.qec_codes.steane.circuits import Logical
