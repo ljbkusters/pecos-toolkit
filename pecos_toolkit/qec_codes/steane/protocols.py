@@ -75,17 +75,20 @@ class SteaneProtocol(object):
 
     @staticmethod
     def measure_x_stabilizers(state, *args, **kwargs):
+        """wrapper method for measuring all x stabilizer plaquettes"""
         return SteaneProtocol.measure_stabilizers(
                 state, Steane.BaseSteaneData.x_stabilizers, *args, **kwargs)
 
     @staticmethod
     def measure_z_stabilizers(state, *args, **kwargs):
+        """wrapper method for measuring all z stabilizer plaquettes"""
         return SteaneProtocol.measure_stabilizers(
                 state, Steane.BaseSteaneData.z_stabilizers, *args, **kwargs)
 
     @staticmethod
     def correct_from_syndrome(state, syndrome: Syndrome.Syndrome,
                               *args, **kwargs):
+        """apply correction based on measured syndrome"""
         decoder = BasicLOTDecoder.SteaneSyndromeDecoder()
         corr_qubit, corr_pauli_type = decoder.lot_decoder(syndrome)
         if corr_qubit is not None:
@@ -97,18 +100,21 @@ class SteaneProtocol(object):
 
     @staticmethod
     def x_steane_round(state, *args, **kwargs):
+        "do a round of x stabilizer measurements and correction"
         meas_res = SteaneProtocol.measure_x_stabilizers(state, *args, **kwargs)
         return SteaneProtocol.correct_from_syndrome(state, meas_res.syndrome,
                                                     *args, **kwargs)
 
     @staticmethod
     def z_steane_round(state, *args, **kwargs):
+        "do a round of z stabilizer measurements and correction"
         meas_res = SteaneProtocol.measure_z_stabilizers(state, *args, **kwargs)
         return SteaneProtocol.correct_from_syndrome(state, meas_res.syndrome,
                                                     *args, **kwargs)
 
     @staticmethod
     def full_steane_round(state, *args, **kwargs):
+        "wrapper for x + z stabilizer measurement and correction"
         state, meas, fault = SteaneProtocol.x_steane_round(state, *args,
                                                            **kwargs)
         state, meas, fault = SteaneProtocol.z_steane_round(state, *args,
@@ -116,8 +122,9 @@ class SteaneProtocol(object):
         return state, meas, fault
 
     @staticmethod
-    def measure_data_state(state, *args, **kwargs):
-        circ = Measurement.DataStateMeasurement()
+    def measure_data_state(state, measure_basis="Z", *args, **kwargs):
+        "Measure all data bits at once"
+        circ = Measurement.DataStateMeasurement(measure_basis=measure_basis)
         res = RUNNER.run(state, circ, *args, **kwargs)
         return res
 
@@ -165,6 +172,8 @@ class F1FTECProtocol(object):
         circ = Measurement.F1FTECStabMeasCircuit(stab)
         return circ.run(state, *args, **kwargs)
 
+    @staticmethod
+    def f1ftec_round(state, *args, **kwargs):
         syndrome = {}
         ancilla_qubit = Measurement.F1FTECStabMeasCircuitData.ANCILLA_QUBIT
         x_stabs = Steane.BaseSteaneData.x_stabilizers
