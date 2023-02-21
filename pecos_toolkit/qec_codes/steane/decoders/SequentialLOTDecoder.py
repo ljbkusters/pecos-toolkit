@@ -70,11 +70,11 @@ class SequentialLOTDecoder(AbstractSequentialDecoder
 
 
         SIGNAL = None, FLAG, INCREMENT
-    
+
 
     Algorithm:
     # data = P_stab, NOT-P_flag (i.e. X_stab, Z_flag and v.v.)
-    for data in (X, Z): 
+    for data in (X, Z):
 
         s0 = 0
         signal = NONE
@@ -110,7 +110,7 @@ class SequentialLOTDecoder(AbstractSequentialDecoder
         self.basic_lot_decoder = BasicLOTDecoder.SteaneSyndromeDecoder()
         self.verbose = verbose
 
-    def decode_sequence_to_parity(self, sequence_data, input_parity,
+    def decode_sequence_to_parity(self, sequence_data, input_parity=0,
                                   basis=None):
         """Decode a sequence of data to logical error parity
 
