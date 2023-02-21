@@ -111,14 +111,14 @@ class SequentialLOTDecoder(AbstractSequentialDecoder
         self.verbose = verbose
 
     def decode_sequence_to_parity(self, sequence_data, input_parity=0,
-                                  basis=None):
+                                  basis=None, mask_val=-1):
         """Decode a sequence of data to logical error parity
 
         Wraps around the decode_sequence_to_corrections and determines
         the logical weight of the suggested correction.
         """
         compiled_corrections = self.decode_sequence_to_correction(
-                sequence_data)
+                sequence_data, mask_val=mask_val)
         correction_parities = {key: self.correction_logical_weight(val)
                                for key, val in compiled_corrections.items()}
         expected_logical_parities = {key: (input_parity + val) % 2
@@ -131,7 +131,7 @@ class SequentialLOTDecoder(AbstractSequentialDecoder
         else:
             raise ValueError("Basis should be one of (None, 'X', 'Z')")
 
-    def decode_sequence_to_correction(self, sequence_data):
+    def decode_sequence_to_correction(self, sequence_data, mask_val=-1):
         """Decode a sequence of data to corrections
 
         Determines the best correction based on reasonable assumptions
@@ -139,7 +139,8 @@ class SequentialLOTDecoder(AbstractSequentialDecoder
         """
         if isinstance(sequence_data, numpy.ndarray):
             # remove -1 mask if present
-            sequence_data = sequence_data[(sequence_data >= 0).all(axis=1)]
+            sequence_data = sequence_data[(sequence_data != mask_val)
+                                          .any(axis=1)]
 
         seq_data_len = len(sequence_data)
         corrections = {"X": [], "Z": []}
