@@ -32,7 +32,7 @@ class _BaseNeuralNetworkDecoder(
         AbstractSequentialDecoder.AbstractSequentialDecoder):
 
     def __init__(self, *args, **kwargs):
-        print(args, kwargs)
+        # print(args, kwargs)
         super().__init__(*args, **kwargs)
         self.model = keras.models.Sequential()
 
@@ -90,7 +90,7 @@ class _BaseNeuralNetworkDecoder(
 
     def fit(self, *args, **kwargs):
         """Wrapper for self.model.fit"""
-        self.model.fit(*args, **kwargs)
+        return self.model.fit(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         """Wrapper for self.model.save"""
@@ -147,12 +147,15 @@ class DualLSTMDecoder(_BaseNeuralNetworkDecoder):
             print(f"Saving checkpoints to {self.checkpoint_filepath}...")
         super().__init__(*args, **kwargs)
 
-    def define_model(self, input_shape, mask_value, learning_rate):
+    def define_model(self, input_shape, mask_value, learning_rate,
+                     n_lstm_layers=2):
+        assert n_lstm_layers >= 2
         self.input_shape = input_shape
         self.loss_function = keras.losses.BinaryCrossentropy()
         self.optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
         # LSTM Layer + masking
+        # for i in range(n_lstm_layers - 1):
         self.model.add(keras.layers.Masking(
               mask_value=mask_value, input_shape=input_shape))
         self.model.add(keras.layers.LSTM(units=36,
@@ -237,7 +240,6 @@ class DualLSTMDecoderXZ(_BaseNeuralNetworkDecoder):
     @staticmethod
     def masked_bce(y_true, y_pred, *args, y_mask_value=-1., **kwargs):
         mask = keras.backend.not_equal(y_true, y_mask_value),
-        print(mask)
         p = keras.backend.cast(y_true * mask, keras.backend.floatx())
         q = y_pred * mask
         return keras.backend.binary_crossentropy(p, q)
