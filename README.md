@@ -19,16 +19,16 @@ object oriented implementation which is in line with PECOS.
 
 ## Visuals
 The stean code visualized as a graph
-![Steane code graph](figures/steane-code-graph-1.png)
+![Steane code graph](figures/steane-code-graph.png)
 
 Flag based steane code readout circuit example for plaquette $X_{1234}$
-![flag1-steane-meas-x.png](figures/steane-code-graph-1.png)
+![flag1-steane-meas-x.png](figures/flag1-steane-meas-x.jpg)
 
 Steane code readout scheme for all plaquettes.
-![flag1-steane-meas-x.png](figures/readout-schedule.png)
+![flag1-steane-meas-x.png](figures/readout-schedule.jpg)
 
 Fault tolerant RNN decoder.
-![flag1-steane-meas-x.png](figures/readout-schedule.png)
+![flag1-steane-meas-x.png](figures/steane-code-graph.jpg)
 
 ## Dependencies
 This package depends on the PECOS version provided by Sascha Heußen. Currently
