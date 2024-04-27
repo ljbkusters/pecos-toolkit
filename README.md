@@ -18,9 +18,17 @@ and a circuit runner with extended features. The repository aims to be an
 object oriented implementation which is in line with PECOS.
 
 ## Visuals
-Depending on what you are making, it can be a good idea to include screenshots
-or even a video (you'll frequently see GIFs rather than actual videos). Tools
-like ttygif can help, but check out Asciinema for a more sophisticated method.
+The stean code visualized as a graph
+![Steane code graph](figures/steane-code-graph-1.png)
+
+Flag based steane code readout circuit example for plaquette $X_{1234}$
+![flag1-steane-meas-x.png](figures/steane-code-graph-1.png)
+
+Steane code readout scheme for all plaquettes.
+![flag1-steane-meas-x.png](figures/readout-schedule.png)
+
+Fault tolerant RNN decoder.
+![flag1-steane-meas-x.png](figures/readout-schedule.png)
 
 ## Dependencies
 This package depends on the PECOS version provided by Sascha Heußen. Currently
