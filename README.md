@@ -22,6 +22,7 @@ The stean code visualized as a graph
 ![Steane code graph](figures/steane-code-graph.jpg)
 
 Flag based steane code readout circuit example for plaquette $X_{1234}$
+
 ![Example flag based steane readout circuit](figures/flag1-steane-meas-x.jpg)
 
 Steane code readout scheme for all plaquettes.
